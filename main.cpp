@@ -1,3 +1,6 @@
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <numbers>
@@ -20,8 +23,8 @@ static int yCoord = height / 2;
 
 GLubyte* canvas = new GLubyte[width * height * 3];
 
-    std::default_random_engine generator;
-    std::uniform_int_distribution<unsigned int> distribution(0, 255);
+std::default_random_engine generator;
+std::uniform_int_distribution<unsigned int> distribution(0, 255);
 
 void drawSphere(GLubyte* pixelbuf, int width, int height)
 {
@@ -226,14 +229,6 @@ void makePixel(int x, int y, GLubyte r, GLubyte g, GLubyte b, GLubyte *pixelbuf,
     }
 }
 
-void display(GLFWwindow* window)
-{
-    glClear(GL_COLOR_BUFFER_BIT);
-    glDrawPixels(width, height, GL_RGB, GL_UNSIGNED_BYTE, canvas);
-    glfwSwapBuffers(window);
-}
-
-
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
@@ -257,11 +252,13 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 int main()
 {
+    // Initialize the canvas for OpenGl
     setGradient(canvas, width, height);
 
     if (!glfwInit())
     {
         std::cerr << "glfw failed to init\n";
+        return 1;
     }
 
     GLFWwindow* window = glfwCreateWindow(width, height, "SketchiBoi", NULL, NULL);
@@ -269,15 +266,54 @@ int main()
     {
         std::cerr << "window failed\n";
         glfwTerminate();
+        return 1;
     }
 
     glfwSetKeyCallback(window, key_callback);
     glfwMakeContextCurrent(window);
 
+    // imgui glfw example does this for vsync, might be a bad idea
+    glfwSwapInterval(1);
+
+    // Setup imgui
+    ImGui::CreateContext();
+
+    // I'm not really sure what ; (void)io does
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    //io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+
+    // Never light mode
+    ImGui::StyleColorsDark();
+
+    ImGuiStyle& style = ImGui::GetStyle();
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        style.WindowRounding = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+    }
+
+    // Setup Platform/renderer backends
+    const char* glsl_version = "#version 130";
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
+
+
+    // state!
+    bool raytrace_enable = true;
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
     while (!glfwWindowShouldClose(window))
     {
         glfwGetFramebufferSize(window, &width, &height);
         glfwPollEvents();
+
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
         if (((yCoord + xCoord) % 3) == 0)
         {
             makePixel(xCoord, yCoord, 255, 0, 0, canvas, width, height);
@@ -290,10 +326,77 @@ int main()
         {
             makePixel(xCoord, yCoord, 0, 0, 255, canvas, width, height);
         }
-       
+
+        {
+            ImGui::Begin("Test Controls");
+            ImGui::Text("Renderer Controls");
+
+            if (ImGui::Button("Render"))
+            {
+                drawSphere(canvas, width, height);
+            }
+
+            if (ImGui::Button("Clear"))
+            {
+                clearCanvas(canvas, width, height);
+            }
+
+            if (ImGui::Button("Gradient"))
+            {
+                setGradient(canvas, width, height);
+            }
+            ImGui::End();
+        }
+
+        // Replace the OpenGl canvas with an ImGui one
+        /* {
+            GLuint image_texture;
+            glGenTextures(1, &image_texture);
+            glBindTexture(GL_TEXTURE_2D, image_texture);
+
+            // Setup filtering parameters for display
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glScalef(1.0f, -1.0f, 1.0f);
+
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, canvas);
+
+            ImGui::Begin("Texture Test");
+            ImGui::Image((void*)(intptr_t)image_texture,
+                ImVec2(width, height),
+                ImVec2(0, 1), // Coordinates are flipped by default, this fixes that
+                ImVec2(1, 0));
+            ImGui::End();
+        }*/
+
+        // Rendering
+        ImGui::Render();
+        int display_w, display_h;
+        glfwGetFramebufferSize(window, &display_w, &display_h);
+        glViewport(0, 0, display_w, display_h);
+        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
-        display(window);
+        glDrawPixels(width, height, GL_RGB, GL_UNSIGNED_BYTE, canvas);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        // Update and Render additional Platform Windows
+        // (Platform functions may change the current OpenGL context, so we save/restore it to make it easier to paste this code elsewhere.
+        //  For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            GLFWwindow* backup_current_context = glfwGetCurrentContext();
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+            glfwMakeContextCurrent(backup_current_context);
+        }
+
+        glfwSwapBuffers(window);
     }
+
+    // Cleanup
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
     glfwDestroyWindow(window);
     glfwTerminate();
