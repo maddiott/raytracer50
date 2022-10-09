@@ -299,12 +299,12 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-
     // state!
     bool raytrace_enable = true;
+    bool window_open = true;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-    while (!glfwWindowShouldClose(window))
+    while ((!glfwWindowShouldClose(window)) && window_open)
     {
         glfwGetFramebufferSize(window, &width, &height);
         glfwPollEvents();
@@ -345,29 +345,13 @@ int main()
             {
                 setGradient(canvas, width, height);
             }
+
+            if (ImGui::Button("Close"))
+            {
+                window_open = false;
+            }
             ImGui::End();
         }
-
-        // Replace the OpenGl canvas with an ImGui one
-        /* {
-            GLuint image_texture;
-            glGenTextures(1, &image_texture);
-            glBindTexture(GL_TEXTURE_2D, image_texture);
-
-            // Setup filtering parameters for display
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glScalef(1.0f, -1.0f, 1.0f);
-
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, canvas);
-
-            ImGui::Begin("Texture Test");
-            ImGui::Image((void*)(intptr_t)image_texture,
-                ImVec2(width, height),
-                ImVec2(0, 1), // Coordinates are flipped by default, this fixes that
-                ImVec2(1, 0));
-            ImGui::End();
-        }*/
 
         // Rendering
         ImGui::Render();
