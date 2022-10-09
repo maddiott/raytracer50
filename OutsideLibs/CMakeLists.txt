@@ -30,3 +30,8 @@ include_directories("C:/Program Files\ (x86)/GLFW/include")
     target_link_libraries(imgui_glfw_example IMGUI Opengl32 glfw)
     set_target_properties(imgui_glfw_example PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 #endif()
+
+set(STB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/stb_image_writer)
+include_directories( STB
+                     PUBLIC ${STB_DIR}
+                     )

@@ -2,11 +2,16 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include <GLFW/glfw3.h>
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "OutsideLibs/stb_image_writer/stb_image_write.h"
+
+#include <cmath>
+#include <filesystem>
 #include <iostream>
 #include <numbers>
 #include <random>
 #include <vector>
-#include <cmath>
 
 typedef struct
 {
@@ -17,6 +22,7 @@ typedef struct
 
 int width = 640;
 int height = 480;
+int channels = 3;
 
 static int xCoord = width / 2;
 static int yCoord = height / 2;
@@ -304,6 +310,14 @@ int main()
     bool window_open = true;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
+    // Setting up saving default path
+    std::filesystem::path cwd = std::filesystem::current_path() / "TestRender.png";
+    static char FilePath[128];
+    std::string cwdString = cwd.string();
+
+    strcpy(FilePath, cwdString.c_str());
+
+
     while ((!glfwWindowShouldClose(window)) && window_open)
     {
         glfwGetFramebufferSize(window, &width, &height);
@@ -344,6 +358,22 @@ int main()
             if (ImGui::Button("Gradient"))
             {
                 setGradient(canvas, width, height);
+            }
+
+            ImGui::InputText("", FilePath, IM_ARRAYSIZE(FilePath));
+            ImGui::SameLine();
+            if (ImGui::Button("Save"))
+            {
+                // Do stuff
+                std::cout << "File to save is: " << FilePath << '\n';
+
+                // OpenGl rendering is flipped, so if we reverse the stride it comes out in the right order
+                int error_value = stbi_write_png(FilePath,
+                                                 width,
+                                                 height,
+                                                 channels,
+                                                 (void *) &canvas[width * (height - 1) * channels],
+                                                 - channels * width);
             }
 
             if (ImGui::Button("Close"))
