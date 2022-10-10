@@ -1,3 +1,6 @@
+#include "include/RaytracerApp.h"
+#include "include/Camera.h"
+#include "include/Viewport.h"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -258,6 +261,13 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 int main()
 {
+    Camera::test();
+
+    // Should construct a new viewport
+    //Viewport viewieboi(640, 480, 3);
+    RaytracerApp mainApp;
+    mainApp.RunApp();
+    return 0;
     // Initialize the canvas for OpenGl
     setGradient(canvas, width, height);
 

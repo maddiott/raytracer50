@@ -5,10 +5,10 @@ set(CMAKE_CXX_STANDARD 20)
 find_package(glfw3 3.3 REQUIRED PATHS "C:/Program Files\ (x86)/GLFW/lib/cmake/glfw3")
 include_directories("C:/Program Files\ (x86)/GLFW/include")
 
-
 add_subdirectory("OutsideLibs")
+add_subdirectory("lib")
 
 set(SOURCE_FILES main.cpp)
 
 add_executable(raytrace50 ${SOURCE_FILES})
-target_link_libraries(raytrace50 glfw Opengl32 IMGUI)
+target_link_libraries(raytrace50 glfw Opengl32 IMGUI RAYTRACER)
