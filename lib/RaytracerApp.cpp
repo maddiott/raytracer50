@@ -1,4 +1,5 @@
 #include "RaytracerApp.h"
+#include "Camera.h"
 #include "Viewport.h"
 #include <iostream>
 
@@ -11,6 +12,8 @@ RaytracerApp::RaytracerApp()
 
 int RaytracerApp::RunApp()
 {
+    Camera camera(GuiApp.GetHeight(), GuiApp.GetWidth(), GuiApp);
+
     while (AppRunning)
     {
         // get events from GUIApp
@@ -22,6 +25,8 @@ int RaytracerApp::RunApp()
 
         // update canvas
         GuiApp.UpdateFrame();
+
+        camera.Render();
 
         // Check if we should terminate the app
         AppRunning = !GuiApp.GetWindowShouldClose();

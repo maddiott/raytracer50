@@ -8,8 +8,7 @@
 
 Viewport::Viewport(int width, int height, int channels) : canvas(width * height * channels, 0), width(width), height(height), channels(channels)
 {
-    // First we'll make a gradient
-    MakeGradient();
+    ClearCanvas();
 
     // Create the OpenGl context and set up imgui
     if (!glfwInit())
@@ -149,4 +148,14 @@ void Viewport::KeyCallback(GLFWwindow* window, int key, int scancode, int action
 bool Viewport::GetWindowShouldClose()
 {
     return windowShouldClose;
+}
+
+int Viewport::GetHeight()
+{
+    return height;
+}
+
+int Viewport::GetWidth()
+{
+    return width;
 }
