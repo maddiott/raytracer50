@@ -261,8 +261,6 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 int main()
 {
-    Camera::test();
-
     // Should construct a new viewport
     //Viewport viewieboi(640, 480, 3);
     RaytracerApp mainApp;
