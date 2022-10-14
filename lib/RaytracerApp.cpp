@@ -26,7 +26,7 @@ int RaytracerApp::RunApp()
         // update canvas
         GuiApp.UpdateFrame();
 
-        camera.Render();
+        camera.RenderSpheres(5);
 
         // Check if we should terminate the app
         AppRunning = !GuiApp.GetWindowShouldClose();

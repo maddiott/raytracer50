@@ -3,6 +3,14 @@
 #include "Viewport.h"
 
 #include <iostream>
+#include <random>
+
+typedef struct
+{
+    double x;
+    double y;
+    double z;
+} point3d;
 
 class Camera
 {
@@ -18,6 +26,7 @@ class Camera
         void SetCanvas(Viewport& canvas);
 
         void Render();
+        void RenderSpheres(int NumSpheres);
 
     private:
         int mHeight;
@@ -26,5 +35,9 @@ class Camera
 
         // Want a pointer to the viewport object
         Viewport &mCanvas;
-        
+
+        std::default_random_engine generator;
+        std::uniform_int_distribution<unsigned int> distribution;
+
+
 };

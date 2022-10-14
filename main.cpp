@@ -16,7 +16,7 @@
 #include <random>
 #include <vector>
 
-typedef struct
+/*typedef struct
 {
     double x;
     double y;
@@ -258,6 +258,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     }
     moveCursor(key, width, height);
 }
+*/
 
 int main()
 {
@@ -267,7 +268,7 @@ int main()
     mainApp.RunApp();
     return 0;
     // Initialize the canvas for OpenGl
-    setGradient(canvas, width, height);
+    /*setGradient(canvas, width, height);
 
     if (!glfwInit())
     {
@@ -423,6 +424,6 @@ int main()
     glfwDestroyWindow(window);
     glfwTerminate();
 
-    return 0;
+    return 0;*/
 }
 
