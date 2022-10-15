@@ -14,6 +14,8 @@ int RaytracerApp::RunApp()
 {
     Camera camera(GuiApp.GetHeight(), GuiApp.GetWidth(), GuiApp);
 
+    CameraAction action = CameraAction::None;
+
     while (AppRunning)
     {
         // get events from GUIApp
@@ -23,10 +25,15 @@ int RaytracerApp::RunApp()
         // Basically this is going to be split into the camera and the world
         // Camera will include the world, but will also interact
 
-        // update canvas
         GuiApp.UpdateFrame();
+        GuiApp.UpdateGui();
 
-        camera.RenderSpheres(5);
+        action = GuiApp.GetGuiAction();
+
+        camera.DoCameraAction(action);
+
+        // Reset state, could probably set up a queue, but that's beyond the scope of this project
+        action = CameraAction::None;
 
         // Check if we should terminate the app
         AppRunning = !GuiApp.GetWindowShouldClose();
