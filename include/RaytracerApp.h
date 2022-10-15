@@ -1,4 +1,5 @@
 #pragma once
+
 #include "Viewport.h"
 
 class RaytracerApp
