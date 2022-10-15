@@ -8,7 +8,6 @@ Camera::Camera(int height, int width, Viewport &canvas) : mHeight(480), mWidth(6
 {
 	SetWidth(width);
 	SetHeight(height);
-    mCanvas = canvas;
     mFrameCount = 0;
 
     // To randomize color and later sampling
@@ -62,6 +61,21 @@ void Camera::Render()
     }
 
     mFrameCount++;
+}
+
+void Camera::DoCameraAction(CameraAction action)
+{
+    switch (action)
+    {
+        case CameraAction::None:
+            break;
+        case CameraAction::DrawSphere:
+            RenderSpheres(5);
+            break;
+        default:
+            break;
+    }
+
 }
 
 void Camera::RenderSpheres(int NumSpheres)

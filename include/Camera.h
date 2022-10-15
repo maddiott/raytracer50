@@ -25,8 +25,7 @@ class Camera
 
         void SetCanvas(Viewport& canvas);
 
-        void Render();
-        void RenderSpheres(int NumSpheres);
+        void DoCameraAction(CameraAction action);
 
     private:
         int mHeight;
@@ -39,5 +38,8 @@ class Camera
         std::default_random_engine generator;
         std::uniform_int_distribution<unsigned int> distribution;
 
-
+    private:
+        void Render();
+        void RenderSpheres(int NumSpheres);
 };
+
