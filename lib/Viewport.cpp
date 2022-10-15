@@ -1,12 +1,15 @@
 #include "Viewport.h"
+#include <filesystem>
 #include <stdexcept>
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
+
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 #include <iostream>
 
-Viewport::Viewport(int width, int height, int channels) : canvas(width * height * channels, 0), width(width), height(height), channels(channels)
+Viewport::Viewport(int width, int height, int channels) :
+    canvas(width * height * channels, 0), width(width), height(height), channels(channels) 
 {
     ClearCanvas();
 
@@ -32,13 +35,47 @@ Viewport::Viewport(int width, int height, int channels) : canvas(width * height 
     // imgui glfw example does this for vsync, might be a bad idea
     glfwSwapInterval(1);
 
+    // Setting up saving default path
+    std::filesystem::path cwd = std::filesystem::current_path() / "TestRender.png";
+    std::string cwdString = cwd.string();
+    strcpy(FilePath, cwdString.c_str());
+
     windowShouldClose = false;
+
+    // Set up imgui
+    GuiContext = ImGui::CreateContext();
+    ImGui::SetCurrentContext(GuiContext);
+
+    // I'm not really sure what ; (void)io does
+    io = &ImGui::GetIO(); (void)io;
+    io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+
+    // Never light mode
+    ImGui::StyleColorsDark();
+
+    ImGuiStyle& style = ImGui::GetStyle();
+    if (io->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        style.WindowRounding = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+    }
+
+    // Setup Platform/renderer backends
+    const char* glsl_version = "#version 130";
+    ImGui_ImplGlfw_InitForOpenGL(AppWindow, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
+
 
 }
 
 Viewport::~Viewport()
 {
-    std::cout << "destroy\n";
+    // Cleanup
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext(GuiContext);
+
     glfwDestroyWindow(AppWindow);
     glfwTerminate();
 }
@@ -58,6 +95,59 @@ void Viewport::UpdateFrame()
         }
 }
 
+void Viewport::UpdateGui()
+{
+    //ImGui::SetCurrentContext(GuiContext);
+    // Start the Dear ImGui frame
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+    {
+        ImGui::Begin("Test Controls");
+        ImGui::Text("Renderer Controls");
+
+        if (ImGui::Button("Render"))
+        {
+            ActionReturned = CameraAction::DrawSphere;
+        }
+
+        if (ImGui::Button("Clear"))
+        {
+            ClearCanvas();
+        }
+
+        if (ImGui::Button("Gradient"))
+        {
+            MakeGradient();
+        }
+
+        ImGui::InputText("##", FilePath, IM_ARRAYSIZE(FilePath));
+        ImGui::SameLine();
+        if (ImGui::Button("Save"))
+        {
+            // Do stuff
+            std::cout << "File to save is: " << FilePath << '\n';
+            WriteFrame(FilePath);
+        }
+
+        if (ImGui::Button("Close"))
+        {
+            windowShouldClose = true;
+        }
+        ImGui::End();
+    }
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+    if (io->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        GLFWwindow* backup_current_context = glfwGetCurrentContext();
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault();
+        glfwMakeContextCurrent(backup_current_context);
+    }
+
+}
 
 // Clear the canvas using the write pixel function, hope that gets inlined
 void Viewport::ClearCanvas()
@@ -88,6 +178,19 @@ void Viewport::WritePixel(int x, int y, GLubyte r, GLubyte g, GLubyte b)
         canvas[position + 1] = g;
         canvas [position + 2] = b;
     }
+}
+
+int Viewport::WriteFrame(const std::string &Filename)
+{
+    // OpenGl rendering is flipped, so if we reverse the stride it comes out in the right order
+    int errorValue = stbi_write_png(FilePath,
+        width,
+        height,
+        channels,
+        (void*)&canvas[width * (height - 1) * channels],
+        -channels * width);
+
+    return errorValue;
 }
 
 void Viewport::MakeGradient()
@@ -141,7 +244,7 @@ void Viewport::KeyCallback(GLFWwindow* window, int key, int scancode, int action
     }
     if (key == GLFW_KEY_R && action == GLFW_PRESS)
     {
-        std::cout << "Spherification is TODO\n";
+        ActionReturned = CameraAction::DrawSphere;
     }
 }
 
@@ -158,4 +261,12 @@ int Viewport::GetHeight()
 int Viewport::GetWidth()
 {
     return width;
+}
+
+CameraAction Viewport::GetGuiAction()
+{
+    CameraAction temp = ActionReturned;
+    ActionReturned = CameraAction::None;
+
+    return temp;
 }
