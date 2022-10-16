@@ -1,6 +1,7 @@
 #include "Camera.h"
 #include <iostream>
 #include <numbers>
+#include <thread>
 #include <vector>
 
 
@@ -12,6 +13,7 @@ Camera::Camera(int height, int width, Viewport &canvas) : mHeight(480), mWidth(6
 
     // To randomize color and later sampling
     std::uniform_int_distribution<unsigned int> distribution(0, 255);
+    isRendering = false;
 }
 
 void Camera::SetWidth(int width)
@@ -67,13 +69,18 @@ void Camera::DoCameraAction(CameraAction action)
 {
     switch (action)
     {
-        case CameraAction::None:
-            break;
-        case CameraAction::DrawSphere:
-            RenderSpheres(5);
-            break;
-        default:
-            break;
+    case CameraAction::None:
+        break;
+    case CameraAction::DrawSphere:
+        if (!isRendering)
+        {
+            isRendering = true;
+            std::thread t(&Camera::RenderSpheres, this, 500);
+            t.detach();
+        }
+        break;
+    default:
+        break;
     }
 
 }
@@ -84,12 +91,12 @@ void Camera::RenderSpheres(int NumSpheres)
     std::vector<point3d> spheres;
     double centX, centY, centZ;
 
-    std::uniform_int_distribution<unsigned int> distributionCent(0, 10);
+    std::uniform_real_distribution<double> distributionCent(-7, 7);
 
     for (int i = 0; i < NumSpheres; i++)
     {
-        centX = ((double)distributionCent(generator)) - 5;
-        centY = ((double)distributionCent(generator)) - 5;
+        centX = ((double)distributionCent(generator));
+        centY = ((double)distributionCent(generator));
         centZ = 10;// distributionCent(generator);
 
        
@@ -99,8 +106,6 @@ void Camera::RenderSpheres(int NumSpheres)
         spheres.push_back(point3d(0, 2, 4));*/
         //spheres.push_back(point3d(-3, 0, 10));
     }
-
-    double radius = 1;
 
     // Camera world coord
     std::vector<double> camera = { 0, 0, 1 };
@@ -131,17 +136,20 @@ void Camera::RenderSpheres(int NumSpheres)
         }
     }
 
+    std::uniform_real_distribution<double> distributionRadius(0.05, 1);
 
     point3d normVectorPix;
     double magnitude = 0;
     for (const point3d &center : spheres)
     {
-        //std::cout << "Center is (" << center.x << ',' << center.y << ',' << center.z << ")\n";
         GLubyte r = (GLubyte)distribution(generator);
         GLubyte g = (GLubyte)distribution(generator);
         GLubyte b = (GLubyte)distribution(generator);
 
         point3d color = { r, g, b };
+
+        double radius = distributionRadius(generator);
+
         for (int i = 0; i < mHeight; i++)
         {
             for (int j = 0; j < mWidth; j++)
@@ -218,5 +226,7 @@ void Camera::RenderSpheres(int NumSpheres)
             }
         }
     }
+
+    isRendering = false;
 }
 

@@ -41,5 +41,8 @@ class Camera
     private:
         void Render();
         void RenderSpheres(int NumSpheres);
+
+        bool isRendering;
+
 };
 
