@@ -5,7 +5,7 @@
 #include <vector>
 
 
-Camera::Camera(int height, int width, Viewport &canvas) : mHeight(480), mWidth(640), mCanvas(canvas)
+Camera::Camera(int height, int width, Viewport &canvas) : mHeight(480), mWidth(640), mCanvas(canvas), mPixelCoords(mHeight, std::vector<point3d>(mWidth, point3d(0, 0, 0)))
 {
 	SetWidth(width);
 	SetHeight(height);
@@ -14,6 +14,37 @@ Camera::Camera(int height, int width, Viewport &canvas) : mHeight(480), mWidth(6
     // To randomize color and later sampling
     std::uniform_int_distribution<unsigned int> distribution(0, 255);
     isRendering = false;
+
+    // Fov in degrees
+    double yFov = (std::numbers::pi * 60) / 180;
+    double xFov = (std::numbers::pi * 60) / 180;
+
+    // tan(xFov) = xMin / zToCam
+    double xMax = tan(xFov / 2);
+    double xMin = -xMax;
+    double xStep = (xMax - xMin) / mWidth;
+
+    // tan(xFov) = xMin / zToCam
+    double yMax = tan(yFov / 2);
+    double yMin = -yMax;
+    double yStep = (yMax - yMin) / mHeight;
+
+    for (int i = 0; i < mHeight; i++)
+    {
+        for (int j = 0; j < mWidth; j++)
+        {
+            mPixelCoords[i][j].x = j * xStep + xStep / 2 + xMin;
+            mPixelCoords[i][j].y = i * yStep + yStep / 2 + yMin;
+            mPixelCoords[i][j].z = mCamera[2];
+        }
+    }
+
+    MakeSpheres(50);
+
+    mACounter = 0;
+
+    // Looks like superscalar is working in my favor, this is more threads than I have cpu cores and I think it's a local min in terms of execution time
+    mRenderThreads = 6 * 2;
 }
 
 void Camera::SetWidth(int width)
@@ -40,6 +71,7 @@ void Camera::SetCanvas(Viewport& canvas)
 {
 }
 
+// Gradient test render
 void Camera::Render()
 {
     int rOffset = (mFrameCount % 480);
@@ -74,9 +106,15 @@ void Camera::DoCameraAction(CameraAction action)
     case CameraAction::DrawSphere:
         if (!isRendering)
         {
+            MakeSpheres(50);
             isRendering = true;
-            std::thread t(&Camera::RenderSpheres, this, 500);
-            t.detach();
+            mACounter = 0;
+            mStartTime = std::chrono::system_clock::now();
+            for (int i = 1; i <= mRenderThreads; i++)
+            {
+                std::thread t(&Camera::RenderSpheres, this, i, mRenderThreads);
+                t.detach();
+            }
         }
         break;
     default:
@@ -85,13 +123,20 @@ void Camera::DoCameraAction(CameraAction action)
 
 }
 
-void Camera::RenderSpheres(int NumSpheres)
+void Camera::MakeSpheres(int NumSpheres)
 {
+    // reset mSpheres
+    mSpheres = std::vector<sphere3d> {};
+
+    // this will be a sphere making thing
     // Start with sphere world coord x, y, z
-    std::vector<point3d> spheres;
     double centX, centY, centZ;
 
+    double radius;
+    sphere3d sphereTemp;
+
     std::uniform_real_distribution<double> distributionCent(-7, 7);
+    std::uniform_real_distribution<double> distributionRadius(0.05, 1);
 
     for (int i = 0; i < NumSpheres; i++)
     {
@@ -99,69 +144,43 @@ void Camera::RenderSpheres(int NumSpheres)
         centY = ((double)distributionCent(generator));
         centZ = 10;// distributionCent(generator);
 
-       
-        spheres.push_back(point3d(centX, centY, centZ));
-        /*spheres.push_back(point3d(0, 0, 10));
-        spheres.push_back(point3d(2, 0, 2));
-        spheres.push_back(point3d(0, 2, 4));*/
-        //spheres.push_back(point3d(-3, 0, 10));
-    }
-
-    // Camera world coord
-    std::vector<double> camera = { 0, 0, 1 };
-
-    // Fov in degrees
-    double yFov = (std::numbers::pi * 60) / 180;
-    double xFov = (std::numbers::pi * 60) / 180;
-
-    // tan(xFov) = xMin / zToCam
-    double xMax = tan(xFov / 2);
-    double xMin = -xMax;
-    double xStep = (xMax - xMin) / mWidth;
-
-    // tan(xFov) = xMin / zToCam
-    double yMax = tan(yFov / 2);
-    double yMin = -yMax;
-    double yStep = (yMax - yMin) / mHeight;
-
-    std::vector<std::vector<point3d>> pixelCoords(mHeight, std::vector<point3d>(mWidth, point3d(0, 0, 0)));
-
-    for (int i = 0; i < mHeight; i++)
-    {
-        for (int j = 0; j < mWidth; j++)
-        {
-            pixelCoords[i][j].x = j * xStep + xStep / 2 + xMin;
-            pixelCoords[i][j].y = i * yStep + yStep / 2 + yMin;
-            pixelCoords[i][j].z = camera[2];
-        }
-    }
-
-    std::uniform_real_distribution<double> distributionRadius(0.05, 1);
-
-    point3d normVectorPix;
-    double magnitude = 0;
-    for (const point3d &center : spheres)
-    {
         GLubyte r = (GLubyte)distribution(generator);
         GLubyte g = (GLubyte)distribution(generator);
         GLubyte b = (GLubyte)distribution(generator);
 
-        point3d color = { r, g, b };
+        radius = distributionRadius(generator);
 
-        double radius = distributionRadius(generator);
+        sphereTemp.center = point3d(centX, centY, centZ);
+        sphereTemp.color = point3d(r, g, b);
+        sphereTemp.radius = radius;
 
-        for (int i = 0; i < mHeight; i++)
+        mSpheres.push_back(sphereTemp);
+    }
+    // end of sphere construction
+
+}
+
+void Camera::RenderSpheres(int ThreadNumber, int NumThreads)
+{
+    point3d normVectorPix;
+    double magnitude = 0;
+    int startingLine = (mHeight / NumThreads) * ThreadNumber - 1;
+    int endingLine = (mHeight / NumThreads) * (ThreadNumber - 1);
+
+    for (int i = startingLine; i >= endingLine; i--)
+    {
+        for (int j = 0; j < mWidth; j++)
         {
-            for (int j = 0; j < mWidth; j++)
+            for (const sphere3d& sphere : mSpheres)
             {
                 // Figure out direction (normalize vector)
-                magnitude = sqrt((pixelCoords[i][j].x * pixelCoords[i][j].x)
-                    + (pixelCoords[i][j].y * pixelCoords[i][j].y)
-                    + (pixelCoords[i][j].z * pixelCoords[i][j].z));
+                magnitude = sqrt((mPixelCoords[i][j].x * mPixelCoords[i][j].x)
+                    + (mPixelCoords[i][j].y * mPixelCoords[i][j].y)
+                    + (mPixelCoords[i][j].z * mPixelCoords[i][j].z));
 
-                normVectorPix.x = pixelCoords[i][j].x / magnitude;
-                normVectorPix.y = pixelCoords[i][j].y / magnitude;
-                normVectorPix.z = pixelCoords[i][j].z / magnitude;
+                normVectorPix.x = mPixelCoords[i][j].x / magnitude;
+                normVectorPix.y = mPixelCoords[i][j].y / magnitude;
+                normVectorPix.z = mPixelCoords[i][j].z / magnitude;
 
                 // Send out ray (see Glassner chapter 2, this is the algebraic form of the parametric intersection)
                 double A = normVectorPix.x * normVectorPix.x
@@ -175,13 +194,13 @@ void Camera::RenderSpheres(int NumSpheres)
                 }
 
                 // Origin is defined as 0 so X_o = Y_o = Z_o = 0
-                double B = 2 * ((normVectorPix.x * (-center.x))
-                    + (normVectorPix.y * (-center.y))
-                    + (normVectorPix.z * (-center.z)));
+                double B = 2 * ((normVectorPix.x * (-sphere.center.x))
+                    + (normVectorPix.y * (-sphere.center.y))
+                    + (normVectorPix.z * (-sphere.center.z)));
 
-                double C = (-center.x) * (-center.x)
-                    + (-center.y) * (-center.y)
-                    + (-center.z) * (-center.z) - (radius * radius);
+                double C = (-sphere.center.x) * (-sphere.center.x)
+                    + (-sphere.center.y) * (-sphere.center.y)
+                    + (-sphere.center.z) * (-sphere.center.z) - (sphere.radius * sphere.radius);
 
                 // Check intersect
                 double discriminant = B * B - 4 * A * C;
@@ -204,9 +223,9 @@ void Camera::RenderSpheres(int NumSpheres)
 
                 // Check normal
                 point3d normal;
-                normal.x = (intersectVector.x - center.x) / radius;
-                normal.y = (intersectVector.y - center.y) / radius;
-                normal.z = (intersectVector.z - center.z) / radius;
+                normal.x = (intersectVector.x - sphere.center.x) / sphere.radius;
+                normal.y = (intersectVector.y - sphere.center.y) / sphere.radius;
+                normal.z = (intersectVector.z - sphere.center.z) / sphere.radius;
 
                 // Draw
 
@@ -214,9 +233,9 @@ void Camera::RenderSpheres(int NumSpheres)
                 double lambertCosine = normVectorPix.x * normal.x + normVectorPix.y * normal.y + normVectorPix.z * normal.z;
                 point3d colorToDraw;
 
-                colorToDraw.x = color.x * abs(lambertCosine);
-                colorToDraw.y = color.y * abs(lambertCosine);
-                colorToDraw.z = color.z * abs(lambertCosine);
+                colorToDraw.x = sphere.color.x * abs(lambertCosine);
+                colorToDraw.y = sphere.color.y * abs(lambertCosine);
+                colorToDraw.z = sphere.color.z * abs(lambertCosine);
 
                 mCanvas.WritePixel(j,
                     i,
@@ -227,6 +246,16 @@ void Camera::RenderSpheres(int NumSpheres)
         }
     }
 
-    isRendering = false;
+    mACounter++;
+    if (mACounter == mRenderThreads)
+    {
+        mEndTime = std::chrono::system_clock::now();
+        isRendering = false;
+
+        std::cout <<
+            "Render duration: "
+            << std::chrono::duration_cast<std::chrono::milliseconds> (mEndTime - mStartTime).count() / 1000.0
+            << " S\n";
+    }
 }
 
