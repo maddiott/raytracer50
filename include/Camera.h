@@ -2,7 +2,25 @@
 
 #include "Viewport.h"
 
+#include <atomic>
+#include <chrono>
 #include <iostream>
+#include <random>
+#include <vector>
+
+typedef struct
+{
+    double x;
+    double y;
+    double z;
+} point3d;
+
+typedef struct
+{
+    point3d center;
+    point3d color;
+    double radius;
+} sphere3d;
 
 class Camera
 {
@@ -17,7 +35,7 @@ class Camera
 
         void SetCanvas(Viewport& canvas);
 
-        void Render();
+        void DoCameraAction(CameraAction action);
 
     private:
         int mHeight;
@@ -26,5 +44,33 @@ class Camera
 
         // Want a pointer to the viewport object
         Viewport &mCanvas;
-        
+
+        std::default_random_engine generator;
+        std::uniform_int_distribution<unsigned int> distribution;
+
+    private:
+        void MakeSpheres(int NumSpheres);
+
+        void Render();
+        void RenderSpheres(int ThreadNumber, int NumThreads);
+
+        int mRenderThreads;
+
+        std::vector<double> mCamera = { 0, 0, 1 };
+        std::vector<std::vector<point3d>> mPixelCoords;
+
+        std::vector<sphere3d> mSpheres;
+
+        // Decided to try out atomics to help with detached thread synchronization
+        std::atomic<int> mACounter;
+
+        // Adding some benchmarking using std chrono
+        // Idea from https://gist.github.com/mcleary/b0bf4fa88830ff7c882d
+        std::chrono::time_point<std::chrono::system_clock> mStartTime;
+        std::chrono::time_point<std::chrono::system_clock> mEndTime;
+
+        bool isRendering;
+
+
 };
+

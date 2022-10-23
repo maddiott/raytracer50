@@ -1,8 +1,15 @@
 // This file defines the OpenGl Canvas Class
 #pragma once
-
+#include "CameraAction.h"
+ 
 #include <GLFW/glfw3.h>
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
+#include <memory>
 #include <vector>
+#include <string>
 
 class Viewport
 {
@@ -23,20 +30,25 @@ class Viewport
         void SetChannels(int Channels);
 
         void WritePixel(int x, int y, GLubyte r, GLubyte g, GLubyte b);
+        int WriteFrame(const std::string &Filename);
 
         void UpdateFrame();
+        void UpdateGui();
+
         void PollEvents();
 
         void ClearCanvas();
 
         bool GetWindowShouldClose();
 
+        CameraAction GetGuiAction();
+
+
     // Private functions
     private:
         // Callbacks are fun in c++ classes
         //https://stackoverflow.com/questions/44711290/passing-in-c-method-as-a-function-pointer
         void bind();
-        void unbind();
         
         // key callback for GLFW
         void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -53,12 +65,17 @@ class Viewport
         int width = 640;
         int height = 480;
         int channels = 3;
-        
+
+        ImGuiIO* io;
 
         // Actions pertaining to window state are internal, but we want a way to talk to the renderer
         int action = 0;
 
         std::vector<GLubyte> canvas;
+        char FilePath[128];
+
+        CameraAction ActionReturned;
+        ImGuiContext* GuiContext;
 
 };
 
