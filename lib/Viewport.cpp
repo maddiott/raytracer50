@@ -193,6 +193,7 @@ int Viewport::WriteFrame(const std::string &Filename)
     return errorValue;
 }
 
+// This is just test code
 void Viewport::MakeGradient()
 {
     float r = 0;

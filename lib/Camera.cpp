@@ -12,7 +12,7 @@ Camera::Camera(int height, int width, Viewport &canvas) : mHeight(480), mWidth(6
     mFrameCount = 0;
 
     // To randomize color and later sampling
-    std::uniform_int_distribution<unsigned int> distribution(0, 255);
+    std::uniform_int_distribution<unsigned int> mDistribution(0, 255);
     isRendering = false;
 
     // Fov in degrees
@@ -35,11 +35,11 @@ Camera::Camera(int height, int width, Viewport &canvas) : mHeight(480), mWidth(6
         {
             mPixelCoords[i][j].x = j * xStep + xStep / 2 + xMin;
             mPixelCoords[i][j].y = i * yStep + yStep / 2 + yMin;
-            mPixelCoords[i][j].z = mCamera[2];
+            mPixelCoords[i][j].z =  mCamera[2];
         }
     }
-
-    MakeSpheres(50);
+    mWorld.LoadSpheres();
+    mWorld.LoadCube();
 
     mACounter = 0;
 
@@ -125,7 +125,7 @@ void Camera::DoCameraAction(CameraAction action)
 
 void Camera::MakeSpheres(int NumSpheres)
 {
-    // reset mSpheres
+    /*/ reset mSpheres
     mSpheres = std::vector<sphere3d> {};
 
     // this will be a sphere making thing
@@ -140,15 +140,15 @@ void Camera::MakeSpheres(int NumSpheres)
 
     for (int i = 0; i < NumSpheres; i++)
     {
-        centX = ((double)distributionCent(generator));
-        centY = ((double)distributionCent(generator));
+        centX = ((double)distributionCent(mGenerator));
+        centY = ((double)distributionCent(mGenerator));
         centZ = 10;// distributionCent(generator);
 
-        GLubyte r = (GLubyte)distribution(generator);
-        GLubyte g = (GLubyte)distribution(generator);
-        GLubyte b = (GLubyte)distribution(generator);
+        GLubyte r = (GLubyte)mDistribution(mGenerator);
+        GLubyte g = (GLubyte)mDistribution(mGenerator);
+        GLubyte b = (GLubyte)mDistribution(mGenerator);
 
-        radius = distributionRadius(generator);
+        radius = distributionRadius(mGenerator);
 
         sphereTemp.center = point3d(centX, centY, centZ);
         sphereTemp.color = point3d(r, g, b);
@@ -156,13 +156,13 @@ void Camera::MakeSpheres(int NumSpheres)
 
         mSpheres.push_back(sphereTemp);
     }
-    // end of sphere construction
+    // end of sphere construction*/
 
 }
 
 void Camera::RenderSpheres(int ThreadNumber, int NumThreads)
 {
-    point3d normVectorPix;
+    point3d RayNormalVector;
     double magnitude = 0;
     int startingLine = (mHeight / NumThreads) * ThreadNumber - 1;
     int endingLine = (mHeight / NumThreads) * (ThreadNumber - 1);
@@ -171,78 +171,38 @@ void Camera::RenderSpheres(int ThreadNumber, int NumThreads)
     {
         for (int j = 0; j < mWidth; j++)
         {
-            for (const sphere3d& sphere : mSpheres)
-            {
                 // Figure out direction (normalize vector)
                 magnitude = sqrt((mPixelCoords[i][j].x * mPixelCoords[i][j].x)
                     + (mPixelCoords[i][j].y * mPixelCoords[i][j].y)
                     + (mPixelCoords[i][j].z * mPixelCoords[i][j].z));
 
-                normVectorPix.x = mPixelCoords[i][j].x / magnitude;
-                normVectorPix.y = mPixelCoords[i][j].y / magnitude;
-                normVectorPix.z = mPixelCoords[i][j].z / magnitude;
+                RayNormalVector.x = mPixelCoords[i][j].x / magnitude;
+                RayNormalVector.y = mPixelCoords[i][j].y / magnitude;
+                RayNormalVector.z = mPixelCoords[i][j].z / magnitude;
 
-                // Send out ray (see Glassner chapter 2, this is the algebraic form of the parametric intersection)
-                double A = normVectorPix.x * normVectorPix.x
-                    + normVectorPix.y * normVectorPix.y
-                    + normVectorPix.z * normVectorPix.z;
-                // inefficient since branch, but we'll get rid of this later
-                if (abs(A - 1) > 0.0001)
-                {
-                    std::cout << "might want to take a look at this, magnitude is substantially different than 1 "
-                        << A << '\n';
-                }
-
-                // Origin is defined as 0 so X_o = Y_o = Z_o = 0
-                double B = 2 * ((normVectorPix.x * (-sphere.center.x))
-                    + (normVectorPix.y * (-sphere.center.y))
-                    + (normVectorPix.z * (-sphere.center.z)));
-
-                double C = (-sphere.center.x) * (-sphere.center.x)
-                    + (-sphere.center.y) * (-sphere.center.y)
-                    + (-sphere.center.z) * (-sphere.center.z) - (sphere.radius * sphere.radius);
-
-                // Check intersect
-                double discriminant = B * B - 4 * A * C;
-                if (discriminant < 0)
-                {
-                    // If discriminant is less than zero we miss
-                    continue;
-                }
-
-                double t0 = (-B - sqrt(discriminant)) / 2;
-                double t1 = (-B + sqrt(discriminant)) / 2;
-
-                // Closest hit is the one we care about
-                double distance = (t0 < t1) ? t0 : t1;
-
-                point3d intersectVector;
-                intersectVector.x = distance * normVectorPix.x;
-                intersectVector.y = distance * normVectorPix.y;
-                intersectVector.z = distance * normVectorPix.z;
-
-                // Check normal
-                point3d normal;
-                normal.x = (intersectVector.x - sphere.center.x) / sphere.radius;
-                normal.y = (intersectVector.y - sphere.center.y) / sphere.radius;
-                normal.z = (intersectVector.z - sphere.center.z) / sphere.radius;
+                // See if the ray hits anything
+                color3 color(0, 0, 0);
+                point3d normal(0, 0, 0);
+                mWorld.TestIntersection(RayNormalVector, normal, color);
 
                 // Draw
+                if (norm3d(normal) > 0)
+                {
+                    // Find the lamberCosine for shading
+                    double lambertCosine = RayNormalVector.x * normal.x + RayNormalVector.y * normal.y + RayNormalVector.z * normal.z;
+                    point3d colorToDraw;
 
-                // Find the lamberCosine for shading
-                double lambertCosine = normVectorPix.x * normal.x + normVectorPix.y * normal.y + normVectorPix.z * normal.z;
-                point3d colorToDraw;
+                    colorToDraw.x = color.r * abs(lambertCosine);
+                    colorToDraw.y = color.g * abs(lambertCosine);
+                    colorToDraw.z = color.b * abs(lambertCosine);
 
-                colorToDraw.x = sphere.color.x * abs(lambertCosine);
-                colorToDraw.y = sphere.color.y * abs(lambertCosine);
-                colorToDraw.z = sphere.color.z * abs(lambertCosine);
-
-                mCanvas.WritePixel(j,
-                    i,
-                    (GLubyte)colorToDraw.x,
-                    (GLubyte)colorToDraw.y,
-                    (GLubyte)colorToDraw.z);
-            }
+                    mCanvas.WritePixel(j,
+                        i,
+                        (GLubyte)colorToDraw.x,
+                        (GLubyte)colorToDraw.y,
+                        (GLubyte)colorToDraw.z);
+                }
+            
         }
     }
 
