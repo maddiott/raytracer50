@@ -1,4 +1,5 @@
 #include "WorldObject.h"
+#include <iostream>
 
 void WorldObject::SetShapeType(WorldObjectType ShapeType)
 {
@@ -36,7 +37,7 @@ void WorldObject::AddSphere(const sphere3d& NewSphere)
 	mSpheres.push_back(NewSphere);
 }
 
-point3d WorldObject::TestIntersection(const point3d& ray)
+point3d WorldObject::TestIntersection(const point3d& rayOrigin, const point3d& rayDirection)
 {
 	// We want to return the intersection normal if there is an intersection
 	// Otherwise return origin
@@ -47,12 +48,12 @@ point3d WorldObject::TestIntersection(const point3d& ray)
 	case WorldObjectType::Point:
 		break;
 	case WorldObjectType::Sphere:
-        IntersectionNormal = SphereIntersection(ray);
+        IntersectionNormal = SphereIntersection(rayOrigin, rayDirection);
 		break;
 	case WorldObjectType::Triangle:
 		break;
 	case WorldObjectType::Polygon:
-        IntersectionNormal = PolygonIntersection(ray);
+        IntersectionNormal = PolygonIntersection(rayOrigin, rayDirection);
 		break;
 	default:
 		break;
@@ -61,23 +62,35 @@ point3d WorldObject::TestIntersection(const point3d& ray)
     return IntersectionNormal;
 }
 
-point3d WorldObject::SphereIntersection(const point3d& RayNormalVector)
+point3d WorldObject::SphereIntersection(const point3d& rayOrigin, const point3d& rayDirection)
 {
+    point3d RayNormalVector = rayDirection;
     for (const sphere3d& sphere : mSpheres)
     {
         // Send out ray (see Glassner chapter 2, this is the algebraic form of the parametric intersection)
-        double A = RayNormalVector.x * RayNormalVector.x
+        /*double A = RayNormalVector.x * RayNormalVector.x
             + RayNormalVector.y * RayNormalVector.y
-            + RayNormalVector.z * RayNormalVector.z;
+            + RayNormalVector.z * RayNormalVector.z;*/
+
+        double A = dotProduct(rayDirection, rayDirection);
+
+        if (abs(A - 1) > 0.00001)
+        {
+            std::cout << "Camera direction not normalized\n";
+        }
 
         // Origin is defined as 0 so X_o = Y_o = Z_o = 0
-        double B = 2 * ((RayNormalVector.x * (-sphere.center.x))
+        /*double B = 2 * ((RayNormalVector.x * (-sphere.center.x))
             + (RayNormalVector.y * (-sphere.center.y))
-            + (RayNormalVector.z * (-sphere.center.z)));
+            + (RayNormalVector.z * (-sphere.center.z)));*/
 
-        double C = (-sphere.center.x) * (-sphere.center.x)
+        double B = 2 * dotProduct(rayDirection, (rayOrigin - sphere.center));
+
+        /*double C = (-sphere.center.x) * (-sphere.center.x)
             + (-sphere.center.y) * (-sphere.center.y)
-            + (-sphere.center.z) * (-sphere.center.z) - (sphere.radius * sphere.radius);
+            + (-sphere.center.z) * (-sphere.center.z) - (sphere.radius * sphere.radius);*/
+
+        double C = dotProduct(rayOrigin - sphere.center, rayOrigin - sphere.center) - (sphere.radius * sphere.radius);
 
         // Check intersect
         double discriminant = B * B - 4 * A * C;
@@ -98,6 +111,8 @@ point3d WorldObject::SphereIntersection(const point3d& RayNormalVector)
         intersectVector.y = distance * RayNormalVector.y;
         intersectVector.z = distance * RayNormalVector.z;
 
+        intersectVector = rayOrigin + distance * rayDirection;
+
         // Check normal
         point3d normal;
         normal.x = (intersectVector.x - sphere.center.x) / sphere.radius;
@@ -111,20 +126,19 @@ point3d WorldObject::SphereIntersection(const point3d& RayNormalVector)
     return point3d(0, 0, 0);
 }
 
-point3d WorldObject::TriangleIntersection(const point3d& ray)
+point3d WorldObject::TriangleIntersection(const point3d& rayOrigin, const point3d& rayDirection)
 {
     return point3d(0, 0, 0);
 }
 
 // Algorithm is from Glassner
-point3d WorldObject::PolygonIntersection(const point3d& ray)
+point3d WorldObject::PolygonIntersection(const point3d& rayOrigin, const point3d& rayDirection)
 {
     plane2d planeEquation;
 
     // Notation from Glassner
     double v0, vd, t;
     point3d intersectionPoint;
-    point3d rayDirection(0, 0, 1);
     
     for (const polygon3d& poly: mPolygons)
     {
@@ -146,7 +160,7 @@ point3d WorldObject::PolygonIntersection(const point3d& ray)
         planeEquation.D = dotProduct(poly.normal, poly.vertices[0]);
         
         // Not necessary, but it matches the math
-        v0 = (dotProduct(poly.normal, ray) + planeEquation.D);
+        v0 = (dotProduct(poly.normal, rayOrigin) + planeEquation.D);
         
         t =  v0 / vd;
 
@@ -156,9 +170,9 @@ point3d WorldObject::PolygonIntersection(const point3d& ray)
             continue;
         }
         
-        intersectionPoint.x = ray.x + t * rayDirection.x;
-        intersectionPoint.y = ray.y + t * rayDirection.y;
-        intersectionPoint.z = ray.z + t * rayDirection.z;
+        intersectionPoint.x = rayOrigin.x + t * rayDirection.x;
+        intersectionPoint.y = rayOrigin.y + t * rayDirection.y;
+        intersectionPoint.z = rayOrigin.z + t * rayDirection.z;
 
         // At this point we know we intersected the plane, but not the polygon
         int numberCrossings = 0;

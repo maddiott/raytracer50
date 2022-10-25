@@ -9,6 +9,17 @@ struct point3d
 
 };
 
+inline point3d operator+(const point3d& a, const point3d& b)
+{
+    point3d result(0, 0, 0);
+
+    result.x = a.x + b.x;
+    result.y = a.y + b.y;
+    result.z = a.z + b.z;
+
+    return result;
+}
+
 inline point3d operator-(const point3d& a, const point3d& b)
 {
     point3d result(0, 0, 0);
@@ -16,6 +27,17 @@ inline point3d operator-(const point3d& a, const point3d& b)
     result.x = a.x - b.x;
     result.y = a.y - b.y;
     result.z = a.z - b.z;
+
+    return result;
+}
+
+inline point3d operator-(const point3d& a)
+{
+    point3d result(0, 0, 0);
+
+    result.x = -a.x;
+    result.y = -a.y;
+    result.z = -a.z;
 
     return result;
 }
@@ -28,6 +50,17 @@ inline point3d operator/(const point3d& a, double b)
     result.y = a.y / b;
     result.z = a.z / b;
     
+    return result;
+}
+
+inline point3d operator*(double b, const point3d& a)
+{
+    point3d result(0, 0, 0);
+
+    result.x = b * a.x;
+    result.y = b * a.y;
+    result.z = b * a.z;
+
     return result;
 }
 
@@ -107,12 +140,12 @@ class WorldObject
         void AddPolygon(const polygon3d& NewPolygon);
         void AddSphere(const sphere3d& NewSphere);
 
-        point3d TestIntersection(const point3d& ray);
+        point3d TestIntersection(const point3d& rayOrigin, const point3d& rayDirection);
         
     private:
-        point3d SphereIntersection(const point3d& ray);
-        point3d TriangleIntersection(const point3d& ray);
-        point3d PolygonIntersection(const point3d& ray);
+        point3d SphereIntersection(const point3d& rayOrigin, const point3d& rayDirection);
+        point3d TriangleIntersection(const point3d& rayOrigin, const point3d& rayDirection);
+        point3d PolygonIntersection(const point3d& rayOrigin, const point3d& rayDirection);
 
     private:
         WorldObjectType mShapeType;
