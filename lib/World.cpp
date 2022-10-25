@@ -26,9 +26,9 @@ void World::LoadCube()
         {0.000000, 2.000000, 10.000000} };*/
 
     double vertices[4][3] = {
-        {-1, 1, 10},
-        {1, -1, 10},
-        {-1, -1, 10},
+        {2, 1, 10},
+        {1, 2, 10},
+        {2, 2, 10},
         {1, 1, 10}
     };
 
@@ -90,7 +90,7 @@ void World::LoadCube()
 
     ObjectTemp->SetColor(color3(255, 0, 0));
 
-    std::unique_ptr<WorldObject> pObject(ObjectTemp);
+    std::shared_ptr<WorldObject> pObject(ObjectTemp);
 
     mWorldList.push_back(std::move(pObject));
 }

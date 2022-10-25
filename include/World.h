@@ -28,5 +28,5 @@ private:
 	std::uniform_int_distribution<unsigned int> mDistribution;
 	
 	// Need a world list
-	std::vector<std::unique_ptr<WorldObject>> mWorldList;
+	std::vector<std::shared_ptr<WorldObject>> mWorldList;
 };

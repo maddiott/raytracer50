@@ -146,9 +146,9 @@ point3d WorldObject::PolygonIntersection(const point3d& ray)
         planeEquation.D = dotProduct(poly.normal, poly.vertices[0]);
         
         // Not necessary, but it matches the math
-        v0 = - (dotProduct(poly.normal, ray) + planeEquation.D);
+        v0 = (dotProduct(poly.normal, ray) + planeEquation.D);
         
-        t =  - v0 / vd;
+        t =  v0 / vd;
 
         // Ray hits behind us
         if (t < 0)
