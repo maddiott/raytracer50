@@ -68,10 +68,6 @@ point3d WorldObject::SphereIntersection(const point3d& rayOrigin, const point3d&
     for (const sphere3d& sphere : mSpheres)
     {
         // Send out ray (see Glassner chapter 2, this is the algebraic form of the parametric intersection)
-        /*double A = RayNormalVector.x * RayNormalVector.x
-            + RayNormalVector.y * RayNormalVector.y
-            + RayNormalVector.z * RayNormalVector.z;*/
-
         double A = dotProduct(rayDirection, rayDirection);
 
         if (abs(A - 1) > 0.00001)
@@ -79,16 +75,7 @@ point3d WorldObject::SphereIntersection(const point3d& rayOrigin, const point3d&
             std::cout << "Camera direction not normalized\n";
         }
 
-        // Origin is defined as 0 so X_o = Y_o = Z_o = 0
-        /*double B = 2 * ((RayNormalVector.x * (-sphere.center.x))
-            + (RayNormalVector.y * (-sphere.center.y))
-            + (RayNormalVector.z * (-sphere.center.z)));*/
-
         double B = 2 * dotProduct(rayDirection, (rayOrigin - sphere.center));
-
-        /*double C = (-sphere.center.x) * (-sphere.center.x)
-            + (-sphere.center.y) * (-sphere.center.y)
-            + (-sphere.center.z) * (-sphere.center.z) - (sphere.radius * sphere.radius);*/
 
         double C = dotProduct(rayOrigin - sphere.center, rayOrigin - sphere.center) - (sphere.radius * sphere.radius);
 
@@ -128,7 +115,7 @@ point3d WorldObject::SphereIntersection(const point3d& rayOrigin, const point3d&
 
 point3d WorldObject::TriangleIntersection(const point3d& rayOrigin, const point3d& rayDirection)
 {
-    return point3d(0, 0, 0);
+    return PolygonIntersection(rayOrigin, rayDirection);
 }
 
 // Algorithm is from Glassner
@@ -140,10 +127,17 @@ point3d WorldObject::PolygonIntersection(const point3d& rayOrigin, const point3d
     double v0, vd, t;
     point3d intersectionPoint;
     
-    for (const polygon3d& poly: mPolygons)
+    for (polygon3d& poly: mPolygons)
     {
+        // Cross product can point one of two ways, we want it point towards the camera
+        if (dotProduct(poly.normal, rayDirection) < 0)
+        {
+            poly.normal = -poly.normal;
+        }
+        
         // Check if the ray intersects our plane
         vd = dotProduct(rayDirection, poly.normal);
+
         if (vd >= 0)
         {
             continue;

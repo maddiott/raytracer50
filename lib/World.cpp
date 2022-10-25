@@ -3,8 +3,6 @@
 
 World::World()
 {
-    //LoadCube();
-    LoadSpheres();
 }
 
 void World::LoadObject(const string& Filename)
@@ -27,10 +25,10 @@ void World::LoadCube()
         {0.000000, 2.000000, 10.000000} };*/
 
     double vertices[4][3] = {
-        {2, 1, 10},
-        {1, 2, 10},
-        {2, 2, 10},
-        {1, 1, 10}
+        {2, 1, 5},
+        {1, 2, 5},
+        {2, 2, 5},
+        {1, 1, 5}
     };
 
     //int faces[6][4] =
@@ -96,10 +94,8 @@ void World::LoadCube()
     mWorldList.push_back(std::move(pObject));
 }
 
-void World::LoadSpheres()
+void World::LoadSpheres(int numSpheres)
 {
-    int NumSpheres = 500;
-
 	// To randomize color and later sampling
 
     // reset mSpheres
@@ -113,9 +109,9 @@ void World::LoadSpheres()
     double radius;
 
     std::uniform_real_distribution<double> distributionCent(-3, 3);
-    std::uniform_real_distribution<double> distributionRadius(0.05, 1);
+    std::uniform_real_distribution<double> distributionRadius(1, 10);
 
-    for (int i = 0; i < NumSpheres; i++)
+    for (int i = 0; i < numSpheres; i++)
     {
         WorldObject* ObjectTemp = new WorldObject();
         ObjectTemp->SetShapeType(WorldObjectType::Sphere);
@@ -131,7 +127,7 @@ void World::LoadSpheres()
         radius = distributionRadius(mGenerator);
 
         sphereTemp.center = point3d(centX, centY, centZ);
-        sphereTemp.radius = 1;// radius;
+        sphereTemp.radius = radius;
 
         ObjectTemp->SetColor(color3(r, g, b));
         ObjectTemp->AddSphere(sphereTemp);

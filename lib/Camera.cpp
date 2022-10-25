@@ -35,10 +35,11 @@ Camera::Camera(int height, int width, Viewport &canvas) : mHeight(480), mWidth(6
         {
             mPixelCoords[i][j].x = j * xStep + xStep / 2 + xMin;
             mPixelCoords[i][j].y = i * yStep + yStep / 2 + yMin;
-            mPixelCoords[i][j].z =  mCameraOrigin.z;
+            mPixelCoords[i][j].z =  1;
         }
     }
-    mWorld.LoadSpheres();
+
+    //mWorld.LoadSpheres(10);
     mWorld.LoadCube();
 
     mACounter = 0;

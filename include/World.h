@@ -19,7 +19,7 @@ public:
 
 	void LoadObject(const string &Filename);
 	void LoadCube();
-	void LoadSpheres();
+	void LoadSpheres(int numSpheres);
 
 	bool TestIntersection(point3d rayOrigin, point3d rayDirection, point3d &planeNormal, color3 &color);
 
