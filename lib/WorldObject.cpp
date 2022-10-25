@@ -130,7 +130,7 @@ point3d WorldObject::PolygonIntersection(const point3d& rayOrigin, const point3d
     for (polygon3d& poly: mPolygons)
     {
         // Cross product can point one of two ways, we want it point towards the camera
-        if (dotProduct(poly.normal, rayDirection) < 0)
+        if (dotProduct(poly.normal, rayDirection) >= 0)
         {
             poly.normal = -poly.normal;
         }
@@ -154,7 +154,8 @@ point3d WorldObject::PolygonIntersection(const point3d& rayOrigin, const point3d
         planeEquation.D = dotProduct(poly.normal, poly.vertices[0]);
         
         // Not necessary, but it matches the math
-        v0 = (dotProduct(poly.normal, rayOrigin) + planeEquation.D);
+        // This should be a sign error, the what?!
+        v0 = ((dotProduct(poly.normal, rayOrigin) + planeEquation.D));
         
         t =  v0 / vd;
 
@@ -167,6 +168,8 @@ point3d WorldObject::PolygonIntersection(const point3d& rayOrigin, const point3d
         intersectionPoint.x = rayOrigin.x + t * rayDirection.x;
         intersectionPoint.y = rayOrigin.y + t * rayDirection.y;
         intersectionPoint.z = rayOrigin.z + t * rayDirection.z;
+
+        intersectionPoint = rayOrigin + t * rayDirection;
 
         // At this point we know we intersected the plane, but not the polygon
         int numberCrossings = 0;
@@ -215,7 +218,7 @@ point3d WorldObject::PolygonIntersection(const point3d& rayOrigin, const point3d
 
         int nextSignHolder = 0;
 
-        for (int i = 0; i < (numberOfVertices - 2); i++)
+        /*for (int i = 0; i < (numberOfVertices); i++)
         {
             int j = (i + 1) % (numberOfVertices);
             nextSignHolder = (projectedPoints[j].V < 0) ? -1 : 1;
@@ -228,9 +231,40 @@ point3d WorldObject::PolygonIntersection(const point3d& rayOrigin, const point3d
                 }
                 else if ((projectedPoints[i].U > 0) || (projectedPoints[j].U > 0))
                 {
-                    if ((projectedPoints[i].U - (projectedPoints[i].V)
+                    if ((projectedPoints[i].U - ((projectedPoints[i].V)
                         * ((projectedPoints[j].U - projectedPoints[i].U)
-                            / ((projectedPoints[j].V - projectedPoints[i].V)))) > 0)
+                            / ((projectedPoints[j].V - projectedPoints[i].V))))) > 0)
+                    {
+                        numberCrossings++;
+                    }
+                }
+
+                signHolder = nextSignHolder;
+            }
+        }*/
+
+        numberCrossings = 0;
+        point2d A, B;
+
+        for (int i = 0; i < (numberOfVertices); i++)
+        {
+            int j = (i + 1) % (numberOfVertices);
+            A = projectedPoints[i];
+            B = projectedPoints[j];
+
+            nextSignHolder = (B.V < 0) ? -1 : 1;
+
+            if (nextSignHolder != signHolder)
+            {
+                if ((A.U > 0) && (B.U > 0))
+                {
+                    numberCrossings++;
+                }
+                else if ((A.U > 0) || (B.U > 0))
+                {
+                    if ((A.U - ((A.V)
+                        * ((B.U - A.U)
+                            / ((B.V - A.V))))) > 0)
                     {
                         numberCrossings++;
                     }

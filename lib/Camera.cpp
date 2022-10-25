@@ -16,7 +16,7 @@ Camera::Camera(int height, int width, Viewport &canvas) : mHeight(480), mWidth(6
     isRendering = false;
 
     // Fov in degrees
-    double yFov = (std::numbers::pi * 60) / 180;
+    double yFov = (std::numbers::pi * 40) / 180;
     double xFov = (std::numbers::pi * 60) / 180;
 
     // tan(xFov) = xMin / zToCam
@@ -45,7 +45,7 @@ Camera::Camera(int height, int width, Viewport &canvas) : mHeight(480), mWidth(6
     mACounter = 0;
 
     // Looks like superscalar is working in my favor, this is more threads than I have cpu cores and I think it's a local min in terms of execution time
-    mRenderThreads = 6 * 2;
+    mRenderThreads = 1;// 6 * 2;
 }
 
 void Camera::SetWidth(int width)
@@ -173,24 +173,30 @@ void Camera::RenderSpheres(int ThreadNumber, int NumThreads)
         for (int j = 0; j < mWidth; j++)
         {
                 // Figure out direction (normalize vector)
-                magnitude = sqrt((mPixelCoords[i][j].x * mPixelCoords[i][j].x)
+            magnitude = norm3d(mPixelCoords[i][j]);/*sqrt((mPixelCoords[i][j].x * mPixelCoords[i][j].x)
                     + (mPixelCoords[i][j].y * mPixelCoords[i][j].y)
-                    + (mPixelCoords[i][j].z * mPixelCoords[i][j].z));
+                    + (mPixelCoords[i][j].z * mPixelCoords[i][j].z))*/;
 
-                RayNormalVector.x = mPixelCoords[i][j].x / magnitude;
+                /*RayNormalVector.x = mPixelCoords[i][j].x / magnitude;
                 RayNormalVector.y = mPixelCoords[i][j].y / magnitude;
-                RayNormalVector.z = mPixelCoords[i][j].z / magnitude;
+                RayNormalVector.z = mPixelCoords[i][j].z / magnitude;*/
+
+                RayNormalVector = mPixelCoords[i][j] / magnitude;
 
                 // See if the ray hits anything
                 color3 color(0, 0, 0);
                 point3d normal(0, 0, 0);
+                if ((i == 220) && (j == 320))
+                {
+                    int a = 1;
+                }
                 mWorld.TestIntersection(mCameraOrigin, RayNormalVector, normal, color);
 
                 // Draw
                 if (norm3d(normal) > 0)
                 {
                     // Find the lamberCosine for shading
-                    double lambertCosine = RayNormalVector.x * normal.x + RayNormalVector.y * normal.y + RayNormalVector.z * normal.z;
+                    double lambertCosine = 1;// RayNormalVector.x* normal.x + RayNormalVector.y * normal.y + RayNormalVector.z * normal.z;
                     point3d colorToDraw;
 
                     colorToDraw.x = color.r * abs(lambertCosine);
