@@ -25,10 +25,10 @@ void World::LoadCube()
         {0.000000, 2.000000, 10.000000} };*/
 
     double vertices[4][3] = {
-        {-5, 5, 100},
-        {-5, -5, 100},
-        {5, -5, 100},
-        {5, 5, 100}
+        {-5, 5, 40},
+        {-5, -5, 40},
+        {5, -5, 20},
+        {5, 5, 20}
     };
 
     //int faces[6][4] =
@@ -109,7 +109,7 @@ void World::LoadSpheres(int numSpheres)
     double radius;
 
     std::uniform_real_distribution<double> distributionCent(-3, 3);
-    std::uniform_real_distribution<double> distributionRadius(1, 10);
+    std::uniform_real_distribution<double> distributionRadius(0.05, 1);
 
     for (int i = 0; i < numSpheres; i++)
     {

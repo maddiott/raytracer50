@@ -16,8 +16,8 @@ Camera::Camera(int height, int width, Viewport &canvas) : mHeight(480), mWidth(6
     isRendering = false;
 
     // Fov in degrees
-    double yFov = (std::numbers::pi * 40) / 180;
-    double xFov = (std::numbers::pi * 60) / 180;
+    double yFov = (std::numbers::pi * 30) / 180;
+    double xFov = (std::numbers::pi * 40) / 180;
 
     // tan(xFov) = xMin / zToCam
     double xMax = tan(xFov / 2);
@@ -39,13 +39,13 @@ Camera::Camera(int height, int width, Viewport &canvas) : mHeight(480), mWidth(6
         }
     }
 
-    //mWorld.LoadSpheres(10);
+    mWorld.LoadSpheres(10);
     mWorld.LoadCube();
 
     mACounter = 0;
 
     // Looks like superscalar is working in my favor, this is more threads than I have cpu cores and I think it's a local min in terms of execution time
-    mRenderThreads = 1;// 6 * 2;
+    mRenderThreads = 6 * 2;
 }
 
 void Camera::SetWidth(int width)
@@ -196,7 +196,7 @@ void Camera::RenderSpheres(int ThreadNumber, int NumThreads)
                 if (norm3d(normal) > 0)
                 {
                     // Find the lamberCosine for shading
-                    double lambertCosine = 1;// RayNormalVector.x* normal.x + RayNormalVector.y * normal.y + RayNormalVector.z * normal.z;
+                    double lambertCosine = RayNormalVector.x* normal.x + RayNormalVector.y * normal.y + RayNormalVector.z * normal.z;
                     point3d colorToDraw;
 
                     colorToDraw.x = color.r * abs(lambertCosine);
