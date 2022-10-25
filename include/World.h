@@ -21,7 +21,7 @@ public:
 	void LoadCube();
 	void LoadSpheres();
 
-	bool TestIntersection(point3d ray, point3d &normal, color3 &color);
+	bool TestIntersection(point3d rayOrigin, point3d rayDirection, point3d &planeNormal, color3 &color);
 
 private:
 	std::default_random_engine mGenerator;

@@ -60,7 +60,7 @@ class Camera
 
         int mRenderThreads;
 
-        std::vector<double> mCamera = { 0, 0, 1 };
+        point3d mCameraOrigin = { 0, 0, 1 };
         std::vector<std::vector<point3d>> mPixelCoords;
 
         std::vector<sphere3d> mSpheres;

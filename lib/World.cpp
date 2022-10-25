@@ -3,7 +3,8 @@
 
 World::World()
 {
-    LoadCube();
+    //LoadCube();
+    LoadSpheres();
 }
 
 void World::LoadObject(const string& Filename)
@@ -97,7 +98,7 @@ void World::LoadCube()
 
 void World::LoadSpheres()
 {
-    int NumSpheres = 0;
+    int NumSpheres = 500;
 
 	// To randomize color and later sampling
 
@@ -144,13 +145,13 @@ void World::LoadSpheres()
 
 }
 
-bool World::TestIntersection(point3d ray, point3d& normal, color3& color)
+bool World::TestIntersection(point3d rayOrigin, point3d rayDirection, point3d& normal, color3& color)
 {
 	point3d intersectionNormal(0, 0, 0);
 
 	for (auto const &object : mWorldList)
 	{
-		intersectionNormal = object->TestIntersection(ray);
+		intersectionNormal = object->TestIntersection(rayOrigin, rayDirection);
 		
 		if (norm3d(intersectionNormal) > 0)
 		{

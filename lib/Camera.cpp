@@ -35,7 +35,7 @@ Camera::Camera(int height, int width, Viewport &canvas) : mHeight(480), mWidth(6
         {
             mPixelCoords[i][j].x = j * xStep + xStep / 2 + xMin;
             mPixelCoords[i][j].y = i * yStep + yStep / 2 + yMin;
-            mPixelCoords[i][j].z =  mCamera[2];
+            mPixelCoords[i][j].z =  mCameraOrigin.z;
         }
     }
     mWorld.LoadSpheres();
@@ -183,7 +183,7 @@ void Camera::RenderSpheres(int ThreadNumber, int NumThreads)
                 // See if the ray hits anything
                 color3 color(0, 0, 0);
                 point3d normal(0, 0, 0);
-                mWorld.TestIntersection(RayNormalVector, normal, color);
+                mWorld.TestIntersection(mCameraOrigin, RayNormalVector, normal, color);
 
                 // Draw
                 if (norm3d(normal) > 0)
