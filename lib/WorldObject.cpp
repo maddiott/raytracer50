@@ -126,6 +126,9 @@ point3d WorldObject::PolygonIntersection(const point3d& rayOrigin, const point3d
     // Notation from Glassner
     double v0, vd, t;
     point3d intersectionPoint;
+
+    double closestDistance = 10000000000;
+    point3d closestNormal(0, 0, 0);
     
     for (polygon3d& poly: mPolygons)
     {
@@ -162,7 +165,8 @@ point3d WorldObject::PolygonIntersection(const point3d& rayOrigin, const point3d
         // Ray hits behind us
         if (t < 0)
         {
-            continue;
+            //t = -t;
+            //continue;
         }
         
         intersectionPoint.x = rayOrigin.x + t * rayDirection.x;
@@ -277,12 +281,15 @@ point3d WorldObject::PolygonIntersection(const point3d& rayOrigin, const point3d
         // If it's an odd number of crossings we're inside
         if ((numberCrossings % 2) == 1)
         {
-            // Think we need to figure out which intersection is closest, but I'll try this for now
-            return poly.normal;
+            if (abs(t) < closestDistance)
+            {
+                closestDistance = abs(t);
+                closestNormal = poly.normal;
+            }
         }
 
     }
 
-    return point3d(0, 0, 0);
+    return closestNormal;// point3d(0, 0, 0);
 }
 
