@@ -3,10 +3,16 @@
 #include <cmath>
 #include <vector>
 
+struct mat3d
+{
+    double x00, x01, x02;
+    double x10, x11, x12;
+    double x20, x21, x22;
+};
+ 
 struct point3d
 {
     double x, y, z;
-
 };
 
 inline point3d operator+(const point3d& a, const point3d& b)
@@ -63,6 +69,17 @@ inline point3d operator*(double b, const point3d& a)
 
     return result;
 }
+
+inline point3d matMult(const mat3d& a, const point3d& v)
+{
+    point3d result(0, 0, 0);
+
+    result.x = a.x00 * v.x + a.x01 * v.y + a.x02 * v.z;
+    result.y = a.x10 * v.x + a.x11 * v.y + a.x12 * v.z;
+    result.z = a.x20 * v.x + a.x21 * v.y + a.x22 * v.z;
+
+    return result;
+};
 
 // This should go in a different file, but for now I'm just putting it here
 inline double dotProduct(point3d a, point3d b)

@@ -36,7 +36,7 @@ class Camera
 
         void SetCanvas(Viewport& canvas);
 
-        void DoCameraAction(CameraAction action);
+        void DoCameraAction(CameraAction action, double illuminationPercentage);
 
     private:
         int mHeight;
@@ -56,7 +56,7 @@ class Camera
         void MakeSpheres(int NumSpheres);
 
         void Render();
-        void RenderSpheres(int ThreadNumber, int NumThreads);
+        void RenderSpheres(int ThreadNumber, int NumThreads, double illuminationPercentage);
 
         int mRenderThreads;
 

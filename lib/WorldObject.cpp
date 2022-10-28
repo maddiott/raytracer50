@@ -133,9 +133,10 @@ point3d WorldObject::PolygonIntersection(const point3d& rayOrigin, const point3d
     for (polygon3d& poly: mPolygons)
     {
         // Cross product can point one of two ways, we want it point towards the camera
-        if (dotProduct(poly.normal, rayDirection) >= 0)
+        if (dotProduct(poly.normal, rayDirection) >= 0.000001)
         {
-            poly.normal = -poly.normal;
+            poly.normal = poly.normal;
+            continue;
         }
         
         // Check if the ray intersects our plane
@@ -165,8 +166,8 @@ point3d WorldObject::PolygonIntersection(const point3d& rayOrigin, const point3d
         // Ray hits behind us
         if (t < 0)
         {
-            //t = -t;
-            //continue;
+            t = -t;
+            continue;
         }
         
         intersectionPoint.x = rayOrigin.x + t * rayDirection.x;
@@ -222,31 +223,6 @@ point3d WorldObject::PolygonIntersection(const point3d& rayOrigin, const point3d
 
         int nextSignHolder = 0;
 
-        /*for (int i = 0; i < (numberOfVertices); i++)
-        {
-            int j = (i + 1) % (numberOfVertices);
-            nextSignHolder = (projectedPoints[j].V < 0) ? -1 : 1;
-
-            if (nextSignHolder != signHolder)
-            {
-                if ((projectedPoints[i].U > 0) && (projectedPoints[j].U > 0))
-                {
-                    numberCrossings++;
-                }
-                else if ((projectedPoints[i].U > 0) || (projectedPoints[j].U > 0))
-                {
-                    if ((projectedPoints[i].U - ((projectedPoints[i].V)
-                        * ((projectedPoints[j].U - projectedPoints[i].U)
-                            / ((projectedPoints[j].V - projectedPoints[i].V))))) > 0)
-                    {
-                        numberCrossings++;
-                    }
-                }
-
-                signHolder = nextSignHolder;
-            }
-        }*/
-
         numberCrossings = 0;
         point2d A, B;
 
@@ -281,10 +257,10 @@ point3d WorldObject::PolygonIntersection(const point3d& rayOrigin, const point3d
         // If it's an odd number of crossings we're inside
         if ((numberCrossings % 2) == 1)
         {
-            if (abs(t) < closestDistance)
+            if (t < closestDistance)
             {
                 closestDistance = abs(t);
-                closestNormal = poly.normal;
+                closestNormal =  poly.normal;
             }
         }
 

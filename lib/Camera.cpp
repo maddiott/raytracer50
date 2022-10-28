@@ -24,7 +24,7 @@ Camera::Camera(int height, int width, Viewport &canvas) : mHeight(480), mWidth(6
     double xMin = -xMax;
     double xStep = (xMax - xMin) / mWidth;
 
-    // tan(xFov) = xMin / zToCam
+    // tan(yFov) = yMin / zToCam
     double yMax = tan(yFov / 2);
     double yMin = -yMax;
     double yStep = (yMax - yMin) / mHeight;
@@ -34,12 +34,14 @@ Camera::Camera(int height, int width, Viewport &canvas) : mHeight(480), mWidth(6
         for (int j = 0; j < mWidth; j++)
         {
             mPixelCoords[i][j].x = j * xStep + xStep / 2 + xMin;
+            //mPixelCoords[i][j].x = j * xStep + xStep + xMin;
             mPixelCoords[i][j].y = i * yStep + yStep / 2 + yMin;
+            //mPixelCoords[i][j].y = i * yStep + yStep + yMin;
             mPixelCoords[i][j].z =  1;
         }
     }
 
-    mWorld.LoadSpheres(10);
+    //mWorld.LoadSpheres(10);
     mWorld.LoadCube();
 
     mACounter = 0;
@@ -98,7 +100,7 @@ void Camera::Render()
     mFrameCount++;
 }
 
-void Camera::DoCameraAction(CameraAction action)
+void Camera::DoCameraAction(CameraAction action, double illuminationPercentage)
 {
     switch (action)
     {
@@ -107,13 +109,12 @@ void Camera::DoCameraAction(CameraAction action)
     case CameraAction::DrawSphere:
         if (!isRendering)
         {
-            MakeSpheres(50);
             isRendering = true;
             mACounter = 0;
             mStartTime = std::chrono::system_clock::now();
             for (int i = 1; i <= mRenderThreads; i++)
             {
-                std::thread t(&Camera::RenderSpheres, this, i, mRenderThreads);
+                std::thread t(&Camera::RenderSpheres, this, i, mRenderThreads, illuminationPercentage);
                 t.detach();
             }
         }
@@ -161,12 +162,37 @@ void Camera::MakeSpheres(int NumSpheres)
 
 }
 
-void Camera::RenderSpheres(int ThreadNumber, int NumThreads)
+void Camera::RenderSpheres(int ThreadNumber, int NumThreads, double illuminationPercentage)
 {
     point3d RayNormalVector;
     double magnitude = 0;
     int startingLine = (mHeight / NumThreads) * ThreadNumber - 1;
     int endingLine = (mHeight / NumThreads) * (ThreadNumber - 1);
+
+    constexpr double pi = 3.14159265;
+
+    constexpr double angle = 45;
+    double c = cos(angle * pi / 180);
+    double s = sin(angle * pi / 180);
+
+    mat3d rotmatx = { 1, 0, 0,
+                      0, c, -s,
+                      0, s, c };
+
+    mat3d rotmaty = { c, 0, s,
+                      0, 1, 0,
+                     -s, 0, c };
+
+    mat3d rotmatz = { c, -s, 0,
+                      s, c, 0,
+                      0, 0, 1 };
+
+    mat3d eye = { 1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 };
+
+    mCameraOrigin = matMult(eye, mCameraOrigin);
+
 
     for (int i = startingLine; i >= endingLine; i--)
     {
@@ -186,22 +212,35 @@ void Camera::RenderSpheres(int ThreadNumber, int NumThreads)
                 // See if the ray hits anything
                 color3 color(0, 0, 0);
                 point3d normal(0, 0, 0);
-                if ((i == 220) && (j == 320))
-                {
-                    int a = 1;
-                }
+
                 mWorld.TestIntersection(mCameraOrigin, RayNormalVector, normal, color);
 
-                // Draw
+                // Draw if we got a hit
                 if (norm3d(normal) > 0)
                 {
                     // Find the lamberCosine for shading
-                    double lambertCosine = RayNormalVector.x* normal.x + RayNormalVector.y * normal.y + RayNormalVector.z * normal.z;
+                    point3d illuminationOrigin(0, 5, 0);
+                    point3d illuminationDirection(0, - illuminationPercentage, 1);
+
+                    point3d illuminationNormal;
+                    illuminationDirection = illuminationDirection / norm3d(illuminationDirection);
+                    mWorld.TestIntersection(illuminationOrigin, illuminationDirection, illuminationNormal, color);
+
+                    double lambertCosine = dotProduct(normal, illuminationDirection);
                     point3d colorToDraw;
 
-                    colorToDraw.x = color.r * abs(lambertCosine);
-                    colorToDraw.y = color.g * abs(lambertCosine);
-                    colorToDraw.z = color.b * abs(lambertCosine);
+                    if (0)// lambertCosine < 0)
+                    {
+                        colorToDraw.x = 0;
+                        colorToDraw.y = 0;
+                        colorToDraw.z = 0;
+                    }
+                    else
+                    {
+                        colorToDraw.x = color.r * abs(lambertCosine);
+                        colorToDraw.y = color.g * abs(lambertCosine);
+                        colorToDraw.z = color.b * abs(lambertCosine);
+                    }
 
                     mCanvas.WritePixel(j,
                         i,

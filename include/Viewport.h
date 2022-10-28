@@ -29,6 +29,8 @@ class Viewport
         int GetChannels();
         void SetChannels(int Channels);
 
+        double GetIlluminationPercentage();
+
         void WritePixel(int x, int y, GLubyte r, GLubyte g, GLubyte b);
         int WriteFrame(const std::string &Filename);
 
@@ -76,6 +78,8 @@ class Viewport
 
         CameraAction ActionReturned;
         ImGuiContext* GuiContext;
+
+        double mIlluminationPercentage;
 
 };
 

@@ -9,7 +9,7 @@
 #include <iostream>
 
 Viewport::Viewport(int width, int height, int channels) :
-    canvas(width * height * channels, 0), width(width), height(height), channels(channels) 
+    canvas(width * height * channels, 0), width(width), height(height), channels(channels), mIlluminationPercentage(1.0)
 {
     ClearCanvas();
 
@@ -97,6 +97,7 @@ void Viewport::UpdateFrame()
 
 void Viewport::UpdateGui()
 {
+    float illuminationSlider = (float) mIlluminationPercentage;
     //ImGui::SetCurrentContext(GuiContext);
     // Start the Dear ImGui frame
     ImGui_ImplOpenGL3_NewFrame();
@@ -105,6 +106,10 @@ void Viewport::UpdateGui()
     {
         ImGui::Begin("Test Controls");
         ImGui::Text("Renderer Controls");
+
+        ImGui::SliderFloat("Illumination percentage", &illuminationSlider, 0.0, 1.0, "%.1f");
+
+        mIlluminationPercentage = (double)illuminationSlider;
 
         if (ImGui::Button("Render"))
         {
@@ -262,6 +267,11 @@ int Viewport::GetHeight()
 int Viewport::GetWidth()
 {
     return width;
+}
+
+double Viewport::GetIlluminationPercentage()
+{
+    return mIlluminationPercentage;
 }
 
 CameraAction Viewport::GetGuiAction()
