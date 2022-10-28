@@ -220,7 +220,7 @@ void Camera::RenderSpheres(int ThreadNumber, int NumThreads, double illumination
                 {
                     // Find the lamberCosine for shading
                     point3d illuminationOrigin(0, 5, 0);
-                    point3d illuminationDirection(0, - illuminationPercentage, 1);
+                    point3d illuminationDirection(0,  - (1 - illuminationPercentage), 1);
 
                     point3d illuminationNormal;
                     illuminationDirection = illuminationDirection / norm3d(illuminationDirection);

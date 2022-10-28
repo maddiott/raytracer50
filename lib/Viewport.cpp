@@ -107,9 +107,13 @@ void Viewport::UpdateGui()
         ImGui::Begin("Test Controls");
         ImGui::Text("Renderer Controls");
 
-        ImGui::SliderFloat("Illumination percentage", &illuminationSlider, 0.0, 1.0, "%.1f");
+        ImGui::SliderFloat("Illumination angle", &illuminationSlider, 0.0, 1.0, "%.1f");
 
-        mIlluminationPercentage = (double)illuminationSlider;
+        if (abs(illuminationSlider - mIlluminationPercentage) > 0.05)
+        {
+            mIlluminationPercentage = (double)illuminationSlider;
+            ActionReturned = CameraAction::DrawSphere;
+        }
 
         if (ImGui::Button("Render"))
         {
