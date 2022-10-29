@@ -6,6 +6,7 @@
 #include <atomic>
 #include <chrono>
 #include <iostream>
+#include <queue>
 #include <random>
 #include <thread>
 #include <vector>
@@ -60,11 +61,14 @@ class Camera
         std::chrono::time_point<std::chrono::system_clock> mEndTime;
 
         bool isRunning;
-        bool isRendering;
+        std::atomic<bool> isRendering;
 
         int mRenderThreads;
         std::vector<std::thread> mRenderThreadPool;
 
         double mIlluminationPercentage;
+        std::atomic<double> mIlluminationPercentageToRender;
+
+        std::queue<double> mIlluminationQueue;
 };
 

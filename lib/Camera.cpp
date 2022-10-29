@@ -9,7 +9,8 @@ Camera::Camera(int height, int width, Viewport &canvas) :
     mWidth(640),
     mCanvas(canvas),
     mPixelCoords(mHeight, std::vector<point3d>(mWidth, point3d(0, 0, 0))),
-    mIlluminationPercentage(1.0)
+    mIlluminationPercentage(1.0),
+    mIlluminationPercentageToRender(1.0)
 {
 	SetWidth(width);
 	SetHeight(height);
@@ -49,14 +50,14 @@ Camera::Camera(int height, int width, Viewport &canvas) :
     mACounter = 0;
 
     // Looks like superscalar is working in my favor, this is more threads than I have cpu cores and I think it's a local min in terms of execution time
-    mRenderThreads = 12;
+    mRenderThreads = 6;
+    isRunning = true;
     for (int i = 1; i <= mRenderThreads; i++)
     {
         std::thread t(&Camera::RenderWorld, this, i, mRenderThreads);
         mRenderThreadPool.push_back(std::move(t));
     }
 
-    isRunning = true;
 }
 
 Camera::~Camera()
@@ -92,6 +93,10 @@ int Camera::GetHeight()
 
 void Camera::SetIlluminationPercentage(double illuminationPercentage)
 {
+    if (abs(illuminationPercentage - mIlluminationPercentage) > 0.05)
+    {
+        mIlluminationQueue.push(illuminationPercentage);
+    }
     mIlluminationPercentage = illuminationPercentage;
 }
 
@@ -134,18 +139,34 @@ void Camera::DoCameraAction(CameraAction action)
 {
     switch (action)
     {
+     // We're going to empty the illumination queue if we have no action to perform
     case CameraAction::None:
+        if ((!isRendering) && (mIlluminationQueue.size() > 0))
+        {
+            if (mIlluminationQueue.size() > 0)
+            {
+                mIlluminationPercentageToRender = mIlluminationQueue.front();
+                mIlluminationQueue.pop();
+                mACounter = 0;
+                mStartTime = std::chrono::system_clock::now();
+                isRendering = true;
+            }
+        }
         break;
     case CameraAction::DrawWorld:
+        // Action queue helps with state sync between gui and renderer
         if (!isRendering)
         {
-            isRendering = true;
+            mIlluminationPercentageToRender = mIlluminationPercentage;
             mACounter = 0;
             mStartTime = std::chrono::system_clock::now();
+            isRendering = true;
         }
         break;
     case CameraAction::DrawGradient:
         RenderGradient();
+        break;
+    case CameraAction::SliderChanged:
         break;
     case CameraAction::StopRender:
         isRunning = false;
@@ -162,11 +183,14 @@ void Camera::RenderWorld(int ThreadNumber, int NumThreads)
     double magnitude = 0;
     int startingLine = (mHeight / NumThreads) * ThreadNumber - 1;
     int endingLine = (mHeight / NumThreads) * (ThreadNumber - 1);
+
+    double illuminationPercentage;
     
     while (isRunning)
     {
         if (isRendering)
         {
+            illuminationPercentage = mIlluminationPercentageToRender;
             for (int i = startingLine; i >= endingLine; i--)
             {
                 for (int j = 0; j < mWidth; j++)
@@ -187,7 +211,7 @@ void Camera::RenderWorld(int ThreadNumber, int NumThreads)
                     {
                         // Find the lamberCosine for shading
                         point3d illuminationOrigin(0, 5, 0);
-                        point3d illuminationDirection(0, -(1 - mIlluminationPercentage), 1);
+                        point3d illuminationDirection(0, -(1 - illuminationPercentage), 1);
 
                         point3d illuminationNormal;
                         illuminationDirection = illuminationDirection / norm3d(illuminationDirection);
@@ -213,14 +237,15 @@ void Camera::RenderWorld(int ThreadNumber, int NumThreads)
             mACounter++;
             if (mACounter == mRenderThreads)
             {
-                mEndTime = std::chrono::system_clock::now();
                 isRendering = false;
+                mEndTime = std::chrono::system_clock::now();
 
-                //std::cout <<
-                 //   "Render duration: "
-                  //  << std::chrono::duration_cast<std::chrono::milliseconds> (mEndTime - mStartTime).count() / 1000.0
-                   // << " S\n";
+                std::cout <<
+                    "Render duration: "
+                    << std::chrono::duration_cast<std::chrono::milliseconds> (mEndTime - mStartTime).count() / 1000.0
+                    << " S\n";
             }
+
         }
     }
 }

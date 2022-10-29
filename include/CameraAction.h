@@ -5,5 +5,6 @@ enum class CameraAction
     None = 0,
     DrawWorld = 1,
     DrawGradient = 2,
-    StopRender = 3
+    SliderChanged = 3,
+    StopRender = 4
 };
