@@ -34,9 +34,7 @@ Camera::Camera(int height, int width, Viewport &canvas) : mHeight(480), mWidth(6
         for (int j = 0; j < mWidth; j++)
         {
             mPixelCoords[i][j].x = j * xStep + xStep / 2 + xMin;
-            //mPixelCoords[i][j].x = j * xStep + xStep + xMin;
             mPixelCoords[i][j].y = i * yStep + yStep / 2 + yMin;
-            //mPixelCoords[i][j].y = i * yStep + yStep + yMin;
             mPixelCoords[i][j].z =  1;
         }
     }
@@ -75,7 +73,7 @@ void Camera::SetCanvas(Viewport& canvas)
 }
 
 // Gradient test render
-void Camera::Render()
+void Camera::RenderGradient()
 {
     int rOffset = (mFrameCount % 480);
     int gOffset = ((mFrameCount >> 8) % 480);
@@ -106,7 +104,7 @@ void Camera::DoCameraAction(CameraAction action, double illuminationPercentage)
     {
     case CameraAction::None:
         break;
-    case CameraAction::DrawSphere:
+    case CameraAction::DrawWorld:
         if (!isRendering)
         {
             isRendering = true;
@@ -114,10 +112,13 @@ void Camera::DoCameraAction(CameraAction action, double illuminationPercentage)
             mStartTime = std::chrono::system_clock::now();
             for (int i = 1; i <= mRenderThreads; i++)
             {
-                std::thread t(&Camera::RenderSpheres, this, i, mRenderThreads, illuminationPercentage);
+                std::thread t(&Camera::RenderWorld, this, i, mRenderThreads, illuminationPercentage);
                 t.detach();
             }
         }
+        break;
+    case CameraAction::DrawGradient:
+        RenderGradient();
         break;
     default:
         break;
@@ -125,44 +126,7 @@ void Camera::DoCameraAction(CameraAction action, double illuminationPercentage)
 
 }
 
-void Camera::MakeSpheres(int NumSpheres)
-{
-    /*/ reset mSpheres
-    mSpheres = std::vector<sphere3d> {};
-
-    // this will be a sphere making thing
-    // Start with sphere world coord x, y, z
-    double centX, centY, centZ;
-
-    double radius;
-    sphere3d sphereTemp;
-
-    std::uniform_real_distribution<double> distributionCent(-7, 7);
-    std::uniform_real_distribution<double> distributionRadius(0.05, 1);
-
-    for (int i = 0; i < NumSpheres; i++)
-    {
-        centX = ((double)distributionCent(mGenerator));
-        centY = ((double)distributionCent(mGenerator));
-        centZ = 10;// distributionCent(generator);
-
-        GLubyte r = (GLubyte)mDistribution(mGenerator);
-        GLubyte g = (GLubyte)mDistribution(mGenerator);
-        GLubyte b = (GLubyte)mDistribution(mGenerator);
-
-        radius = distributionRadius(mGenerator);
-
-        sphereTemp.center = point3d(centX, centY, centZ);
-        sphereTemp.color = point3d(r, g, b);
-        sphereTemp.radius = radius;
-
-        mSpheres.push_back(sphereTemp);
-    }
-    // end of sphere construction*/
-
-}
-
-void Camera::RenderSpheres(int ThreadNumber, int NumThreads, double illuminationPercentage)
+void Camera::RenderWorld(int ThreadNumber, int NumThreads, double illuminationPercentage)
 {
     point3d RayNormalVector;
     double magnitude = 0;
@@ -199,13 +163,7 @@ void Camera::RenderSpheres(int ThreadNumber, int NumThreads, double illumination
         for (int j = 0; j < mWidth; j++)
         {
                 // Figure out direction (normalize vector)
-            magnitude = norm3d(mPixelCoords[i][j]);/*sqrt((mPixelCoords[i][j].x * mPixelCoords[i][j].x)
-                    + (mPixelCoords[i][j].y * mPixelCoords[i][j].y)
-                    + (mPixelCoords[i][j].z * mPixelCoords[i][j].z))*/;
-
-                /*RayNormalVector.x = mPixelCoords[i][j].x / magnitude;
-                RayNormalVector.y = mPixelCoords[i][j].y / magnitude;
-                RayNormalVector.z = mPixelCoords[i][j].z / magnitude;*/
+            magnitude = norm3d(mPixelCoords[i][j]);
 
                 RayNormalVector = mPixelCoords[i][j] / magnitude;
 
@@ -229,18 +187,9 @@ void Camera::RenderSpheres(int ThreadNumber, int NumThreads, double illumination
                     double lambertCosine = dotProduct(normal, illuminationDirection);
                     point3d colorToDraw;
 
-                    if (0)// lambertCosine < 0)
-                    {
-                        colorToDraw.x = 0;
-                        colorToDraw.y = 0;
-                        colorToDraw.z = 0;
-                    }
-                    else
-                    {
                         colorToDraw.x = color.r * abs(lambertCosine);
                         colorToDraw.y = color.g * abs(lambertCosine);
                         colorToDraw.z = color.b * abs(lambertCosine);
-                    }
 
                     mCanvas.WritePixel(j,
                         i,

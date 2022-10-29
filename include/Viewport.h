@@ -14,8 +14,8 @@
 class Viewport
 {
     public:
-        Viewport(int width, int height, int channels);
-        Viewport() : Viewport(640, 480, 3) {};
+        Viewport(int width, int height);
+        Viewport() : Viewport(640, 480) {};
 
         ~Viewport();
 
@@ -24,10 +24,6 @@ class Viewport
 
         int GetHeight();
         void SetHeight(int height);
-
-        // For now channels will always be 3
-        int GetChannels();
-        void SetChannels(int Channels);
 
         double GetIlluminationPercentage();
 
@@ -48,16 +44,13 @@ class Viewport
 
     // Private functions
     private:
-        // Callbacks are fun in c++ classes
+        //  c callbacks are fun in c++ classes
         //https://stackoverflow.com/questions/44711290/passing-in-c-method-as-a-function-pointer
         void bind();
         
         // key callback for GLFW
         void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
         static void KeyCallbackStatic(GLFWwindow* window, int key, int scancode, int action, int mods);
-
-        // Will move to renderer eventually, but for now I need a test case
-        void MakeGradient();
 
     // Private variables
     private:
@@ -66,7 +59,6 @@ class Viewport
 
         int width = 640;
         int height = 480;
-        int channels = 3;
 
         ImGuiIO* io;
 

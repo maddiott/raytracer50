@@ -53,10 +53,8 @@ class Camera
 
 
     private:
-        void MakeSpheres(int NumSpheres);
-
-        void Render();
-        void RenderSpheres(int ThreadNumber, int NumThreads, double illuminationPercentage);
+        void RenderGradient();
+        void RenderWorld(int ThreadNumber, int NumThreads, double illuminationPercentage);
 
         int mRenderThreads;
 
