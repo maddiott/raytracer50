@@ -111,10 +111,11 @@ void Viewport::UpdateGui()
 
         ImGui::SliderFloat("Illumination angle", &illuminationSlider, 0.0, 1.0, "%.1f");
 
+
+        mIlluminationPercentage = (double)illuminationSlider;
         if (abs(illuminationSlider - mIlluminationPercentage) > 0.05)
         {
-            mIlluminationPercentage = (double)illuminationSlider;
-            ActionReturned = CameraAction::DrawWorld;
+            ActionReturned = CameraAction::SliderChanged;
         }
 
         if (ImGui::Button("Render"))
@@ -143,6 +144,7 @@ void Viewport::UpdateGui()
 
         if (ImGui::Button("Close"))
         {
+            ActionReturned = CameraAction::StopRender;
             windowShouldClose = true;
         }
         ImGui::End();

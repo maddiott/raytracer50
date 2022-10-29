@@ -6,27 +6,16 @@
 #include <atomic>
 #include <chrono>
 #include <iostream>
+#include <queue>
 #include <random>
+#include <thread>
 #include <vector>
-
-/*typedef struct
-{
-    double x;
-    double y;
-    double z;
-} point3d;
-
-typedef struct
-{
-    point3d center;
-    point3d color;
-    double radius;
-} sphere3d;*/
 
 class Camera
 {
     public:
         Camera(int height, int width, Viewport& canvas);
+        ~Camera();
 
         void SetWidth(int width);
         int GetWidth();
@@ -34,9 +23,12 @@ class Camera
         void SetHeight(int height);
         int GetHeight();
 
+        void SetIlluminationPercentage(double illuminationPercentage);
+        double GetIlluminationPercentage();
+
         void SetCanvas(Viewport& canvas);
 
-        void DoCameraAction(CameraAction action, double illuminationPercentage);
+        void DoCameraAction(CameraAction action);
 
     private:
         int mHeight;
@@ -51,12 +43,9 @@ class Camera
         std::uniform_int_distribution<unsigned int> mDistribution;
 
 
-
     private:
         void RenderGradient();
-        void RenderWorld(int ThreadNumber, int NumThreads, double illuminationPercentage);
-
-        int mRenderThreads;
+        void RenderWorld(int ThreadNumber, int NumThreads);
 
         point3d mCameraOrigin = { 0, 0, 0 };
         std::vector<std::vector<point3d>> mPixelCoords;
@@ -71,8 +60,15 @@ class Camera
         std::chrono::time_point<std::chrono::system_clock> mStartTime;
         std::chrono::time_point<std::chrono::system_clock> mEndTime;
 
-        bool isRendering;
+        bool isRunning;
+        std::atomic<bool> isRendering;
 
+        int mRenderThreads;
+        std::vector<std::thread> mRenderThreadPool;
 
+        double mIlluminationPercentage;
+        std::atomic<double> mIlluminationPercentageToRender;
+
+        std::queue<double> mIlluminationQueue;
 };
 
