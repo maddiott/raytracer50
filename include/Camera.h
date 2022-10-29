@@ -27,6 +27,7 @@ class Camera
 {
     public:
         Camera(int height, int width, Viewport& canvas);
+        ~Camera();
 
         void SetWidth(int width);
         int GetWidth();

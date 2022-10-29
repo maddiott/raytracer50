@@ -48,6 +48,11 @@ Camera::Camera(int height, int width, Viewport &canvas) : mHeight(480), mWidth(6
     mRenderThreads = 6 * 2;
 }
 
+Camera::~Camera()
+{
+
+}
+
 void Camera::SetWidth(int width)
 {
 	mWidth = width;
@@ -132,31 +137,6 @@ void Camera::RenderWorld(int ThreadNumber, int NumThreads, double illuminationPe
     double magnitude = 0;
     int startingLine = (mHeight / NumThreads) * ThreadNumber - 1;
     int endingLine = (mHeight / NumThreads) * (ThreadNumber - 1);
-
-    constexpr double pi = 3.14159265;
-
-    constexpr double angle = 45;
-    double c = cos(angle * pi / 180);
-    double s = sin(angle * pi / 180);
-
-    mat3d rotmatx = { 1, 0, 0,
-                      0, c, -s,
-                      0, s, c };
-
-    mat3d rotmaty = { c, 0, s,
-                      0, 1, 0,
-                     -s, 0, c };
-
-    mat3d rotmatz = { c, -s, 0,
-                      s, c, 0,
-                      0, 0, 1 };
-
-    mat3d eye = { 1, 0, 0,
-                  0, 1, 0,
-                  0, 0, 1 };
-
-    mCameraOrigin = matMult(eye, mCameraOrigin);
-
 
     for (int i = startingLine; i >= endingLine; i--)
     {
