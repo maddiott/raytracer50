@@ -12,4 +12,5 @@ target_sources(RAYTRACER
                Camera.cpp
                Viewport.cpp
                World.cpp
+               WorldObject.cpp
                )

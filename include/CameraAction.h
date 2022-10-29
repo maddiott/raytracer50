@@ -3,5 +3,6 @@
 enum class CameraAction 
 {
     None = 0,
-    DrawSphere = 1
+    DrawWorld = 1,
+    DrawGradient = 2
 };

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Viewport.h"
+#include "World.h"
 
 #include <atomic>
 #include <chrono>
@@ -8,7 +9,7 @@
 #include <random>
 #include <vector>
 
-typedef struct
+/*typedef struct
 {
     double x;
     double y;
@@ -20,7 +21,7 @@ typedef struct
     point3d center;
     point3d color;
     double radius;
-} sphere3d;
+} sphere3d;*/
 
 class Camera
 {
@@ -35,7 +36,7 @@ class Camera
 
         void SetCanvas(Viewport& canvas);
 
-        void DoCameraAction(CameraAction action);
+        void DoCameraAction(CameraAction action, double illuminationPercentage);
 
     private:
         int mHeight;
@@ -44,19 +45,20 @@ class Camera
 
         // Want a pointer to the viewport object
         Viewport &mCanvas;
+        World mWorld;
 
-        std::default_random_engine generator;
-        std::uniform_int_distribution<unsigned int> distribution;
+        std::default_random_engine mGenerator;
+        std::uniform_int_distribution<unsigned int> mDistribution;
+
+
 
     private:
-        void MakeSpheres(int NumSpheres);
-
-        void Render();
-        void RenderSpheres(int ThreadNumber, int NumThreads);
+        void RenderGradient();
+        void RenderWorld(int ThreadNumber, int NumThreads, double illuminationPercentage);
 
         int mRenderThreads;
 
-        std::vector<double> mCamera = { 0, 0, 1 };
+        point3d mCameraOrigin = { 0, 0, 0 };
         std::vector<std::vector<point3d>> mPixelCoords;
 
         std::vector<sphere3d> mSpheres;

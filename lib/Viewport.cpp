@@ -8,8 +8,10 @@
 
 #include <iostream>
 
-Viewport::Viewport(int width, int height, int channels) :
-    canvas(width * height * channels, 0), width(width), height(height), channels(channels) 
+constexpr int cNumChannels = 3;
+
+Viewport::Viewport(int width, int height) :
+    canvas(width * height * cNumChannels, 0), width(width), height(height),  mIlluminationPercentage(1.0)
 {
     ClearCanvas();
 
@@ -97,6 +99,7 @@ void Viewport::UpdateFrame()
 
 void Viewport::UpdateGui()
 {
+    float illuminationSlider = (float) mIlluminationPercentage;
     //ImGui::SetCurrentContext(GuiContext);
     // Start the Dear ImGui frame
     ImGui_ImplOpenGL3_NewFrame();
@@ -106,9 +109,17 @@ void Viewport::UpdateGui()
         ImGui::Begin("Test Controls");
         ImGui::Text("Renderer Controls");
 
+        ImGui::SliderFloat("Illumination angle", &illuminationSlider, 0.0, 1.0, "%.1f");
+
+        if (abs(illuminationSlider - mIlluminationPercentage) > 0.05)
+        {
+            mIlluminationPercentage = (double)illuminationSlider;
+            ActionReturned = CameraAction::DrawWorld;
+        }
+
         if (ImGui::Button("Render"))
         {
-            ActionReturned = CameraAction::DrawSphere;
+            ActionReturned = CameraAction::DrawWorld;
         }
 
         if (ImGui::Button("Clear"))
@@ -118,7 +129,7 @@ void Viewport::UpdateGui()
 
         if (ImGui::Button("Gradient"))
         {
-            MakeGradient();
+            ActionReturned = CameraAction::DrawGradient;
         }
 
         ImGui::InputText("##", FilePath, IM_ARRAYSIZE(FilePath));
@@ -154,11 +165,11 @@ void Viewport::ClearCanvas()
 {
     for (int i = 0; i < height; i++)
     {
-        for (int j = 0; j < (width * channels); j += channels)
+        for (int j = 0; j < (width * cNumChannels); j += cNumChannels)
         {
-            for (int channel = 0; channel < channels; channel++)
+            for (int channel = 0; channel < cNumChannels; channel++)
             {
-                canvas[j + i * width * channels + channel] = (GLubyte) 0;
+                canvas[j + i * width * cNumChannels + channel] = (GLubyte) 0;
             }
         }
     }
@@ -186,32 +197,11 @@ int Viewport::WriteFrame(const std::string &Filename)
     int errorValue = stbi_write_png(FilePath,
         width,
         height,
-        channels,
-        (void*)&canvas[width * (height - 1) * channels],
-        -channels * width);
+        cNumChannels,
+        (void*)&canvas[width * (height - 1) * cNumChannels],
+        -cNumChannels * width);
 
     return errorValue;
-}
-
-void Viewport::MakeGradient()
-{
-    float r = 0;
-    float g = 0;
-    float b = 0;
-    for (int i = 0; i < height; i++)
-    {
-        for (int j = 0; j < width; j++)
-        {
-            r = (GLubyte)((((float)i) / ((float)height)) * 255);
-            g = (GLubyte)((((float)(i + j)) / ((float)(height + width))) * 255);
-            b = (GLubyte)((((float)j) / ((float)width)) * 255);
-
-            canvas[(j + i * width) * 3] = (GLubyte)(255 - r);
-            canvas[(j + i * width) * 3 + 1] = (GLubyte)(255 - g);
-            canvas[(j + i * width) * 3 + 2] = (GLubyte)(255 - b);
-        }
-    }
-
 }
 
 // Make GLFW callbacks work with c++ classes
@@ -240,11 +230,11 @@ void Viewport::KeyCallback(GLFWwindow* window, int key, int scancode, int action
     } 
     if (key == GLFW_KEY_G && action == GLFW_PRESS)
     {
-        MakeGradient();
+        ActionReturned = CameraAction::DrawGradient;
     }
     if (key == GLFW_KEY_R && action == GLFW_PRESS)
     {
-        ActionReturned = CameraAction::DrawSphere;
+        ActionReturned = CameraAction::DrawWorld;
     }
 }
 
@@ -261,6 +251,11 @@ int Viewport::GetHeight()
 int Viewport::GetWidth()
 {
     return width;
+}
+
+double Viewport::GetIlluminationPercentage()
+{
+    return mIlluminationPercentage;
 }
 
 CameraAction Viewport::GetGuiAction()
