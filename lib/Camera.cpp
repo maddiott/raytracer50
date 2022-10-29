@@ -1,11 +1,15 @@
 #include "Camera.h"
 #include <iostream>
 #include <numbers>
-#include <thread>
 #include <vector>
 
 
-Camera::Camera(int height, int width, Viewport &canvas) : mHeight(480), mWidth(640), mCanvas(canvas), mPixelCoords(mHeight, std::vector<point3d>(mWidth, point3d(0, 0, 0)))
+Camera::Camera(int height, int width, Viewport &canvas) :
+    mHeight(480),
+    mWidth(640),
+    mCanvas(canvas),
+    mPixelCoords(mHeight, std::vector<point3d>(mWidth, point3d(0, 0, 0))),
+    mIlluminationPercentage(1.0)
 {
 	SetWidth(width);
 	SetHeight(height);
@@ -45,12 +49,25 @@ Camera::Camera(int height, int width, Viewport &canvas) : mHeight(480), mWidth(6
     mACounter = 0;
 
     // Looks like superscalar is working in my favor, this is more threads than I have cpu cores and I think it's a local min in terms of execution time
-    mRenderThreads = 6 * 2;
+    mRenderThreads = 12;
+    for (int i = 1; i <= mRenderThreads; i++)
+    {
+        std::thread t(&Camera::RenderWorld, this, i, mRenderThreads);
+        mRenderThreadPool.push_back(std::move(t));
+    }
+
+    isRunning = true;
 }
 
 Camera::~Camera()
 {
-
+    for (auto& t : mRenderThreadPool)
+    {
+        if (t.joinable())
+        {
+            t.join();
+        }
+    }
 }
 
 void Camera::SetWidth(int width)
@@ -71,6 +88,16 @@ void Camera::SetHeight(int height)
 int Camera::GetHeight()
 {
 	return mHeight;
+}
+
+void Camera::SetIlluminationPercentage(double illuminationPercentage)
+{
+    mIlluminationPercentage = illuminationPercentage;
+}
+
+double Camera::GetIlluminationPercentage()
+{
+    return mIlluminationPercentage;
 }
 
 void Camera::SetCanvas(Viewport& canvas)
@@ -103,7 +130,7 @@ void Camera::RenderGradient()
     mFrameCount++;
 }
 
-void Camera::DoCameraAction(CameraAction action, double illuminationPercentage)
+void Camera::DoCameraAction(CameraAction action)
 {
     switch (action)
     {
@@ -115,15 +142,13 @@ void Camera::DoCameraAction(CameraAction action, double illuminationPercentage)
             isRendering = true;
             mACounter = 0;
             mStartTime = std::chrono::system_clock::now();
-            for (int i = 1; i <= mRenderThreads; i++)
-            {
-                std::thread t(&Camera::RenderWorld, this, i, mRenderThreads, illuminationPercentage);
-                t.detach();
-            }
         }
         break;
     case CameraAction::DrawGradient:
         RenderGradient();
+        break;
+    case CameraAction::StopRender:
+        isRunning = false;
         break;
     default:
         break;
@@ -131,66 +156,72 @@ void Camera::DoCameraAction(CameraAction action, double illuminationPercentage)
 
 }
 
-void Camera::RenderWorld(int ThreadNumber, int NumThreads, double illuminationPercentage)
+void Camera::RenderWorld(int ThreadNumber, int NumThreads)
 {
     point3d RayNormalVector;
     double magnitude = 0;
     int startingLine = (mHeight / NumThreads) * ThreadNumber - 1;
     int endingLine = (mHeight / NumThreads) * (ThreadNumber - 1);
-
-    for (int i = startingLine; i >= endingLine; i--)
+    
+    while (isRunning)
     {
-        for (int j = 0; j < mWidth; j++)
+        if (isRendering)
         {
-                // Figure out direction (normalize vector)
-            magnitude = norm3d(mPixelCoords[i][j]);
-
-                RayNormalVector = mPixelCoords[i][j] / magnitude;
-
-                // See if the ray hits anything
-                color3 color(0, 0, 0);
-                point3d normal(0, 0, 0);
-
-                mWorld.TestIntersection(mCameraOrigin, RayNormalVector, normal, color);
-
-                // Draw if we got a hit
-                if (norm3d(normal) > 0)
+            for (int i = startingLine; i >= endingLine; i--)
+            {
+                for (int j = 0; j < mWidth; j++)
                 {
-                    // Find the lamberCosine for shading
-                    point3d illuminationOrigin(0, 5, 0);
-                    point3d illuminationDirection(0,  - (1 - illuminationPercentage), 1);
+                    // Figure out direction (normalize vector)
+                    magnitude = norm3d(mPixelCoords[i][j]);
 
-                    point3d illuminationNormal;
-                    illuminationDirection = illuminationDirection / norm3d(illuminationDirection);
-                    mWorld.TestIntersection(illuminationOrigin, illuminationDirection, illuminationNormal, color);
+                    RayNormalVector = mPixelCoords[i][j] / magnitude;
 
-                    double lambertCosine = dotProduct(normal, illuminationDirection);
-                    point3d colorToDraw;
+                    // See if the ray hits anything
+                    color3 color(0, 0, 0);
+                    point3d normal(0, 0, 0);
+
+                    mWorld.TestIntersection(mCameraOrigin, RayNormalVector, normal, color);
+
+                    // Draw if we got a hit
+                    if (norm3d(normal) > 0)
+                    {
+                        // Find the lamberCosine for shading
+                        point3d illuminationOrigin(0, 5, 0);
+                        point3d illuminationDirection(0, -(1 - mIlluminationPercentage), 1);
+
+                        point3d illuminationNormal;
+                        illuminationDirection = illuminationDirection / norm3d(illuminationDirection);
+                        mWorld.TestIntersection(illuminationOrigin, illuminationDirection, illuminationNormal, color);
+
+                        double lambertCosine = dotProduct(normal, illuminationDirection);
+                        point3d colorToDraw;
 
                         colorToDraw.x = color.r * abs(lambertCosine);
                         colorToDraw.y = color.g * abs(lambertCosine);
                         colorToDraw.z = color.b * abs(lambertCosine);
 
-                    mCanvas.WritePixel(j,
-                        i,
-                        (GLubyte)colorToDraw.x,
-                        (GLubyte)colorToDraw.y,
-                        (GLubyte)colorToDraw.z);
+                        mCanvas.WritePixel(j,
+                            i,
+                            (GLubyte)colorToDraw.x,
+                            (GLubyte)colorToDraw.y,
+                            (GLubyte)colorToDraw.z);
+                    }
+
                 }
-            
+            }
+
+            mACounter++;
+            if (mACounter == mRenderThreads)
+            {
+                mEndTime = std::chrono::system_clock::now();
+                isRendering = false;
+
+                //std::cout <<
+                 //   "Render duration: "
+                  //  << std::chrono::duration_cast<std::chrono::milliseconds> (mEndTime - mStartTime).count() / 1000.0
+                   // << " S\n";
+            }
         }
-    }
-
-    mACounter++;
-    if (mACounter == mRenderThreads)
-    {
-        mEndTime = std::chrono::system_clock::now();
-        isRendering = false;
-
-        std::cout <<
-            "Render duration: "
-            << std::chrono::duration_cast<std::chrono::milliseconds> (mEndTime - mStartTime).count() / 1000.0
-            << " S\n";
     }
 }
 

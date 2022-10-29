@@ -143,6 +143,7 @@ void Viewport::UpdateGui()
 
         if (ImGui::Button("Close"))
         {
+            ActionReturned = CameraAction::StopRender;
             windowShouldClose = true;
         }
         ImGui::End();

@@ -31,9 +31,10 @@ int RaytracerApp::RunApp()
 
         action = GuiApp.GetGuiAction();
         illuminationPercentage = GuiApp.GetIlluminationPercentage();
+        camera.SetIlluminationPercentage(illuminationPercentage);
 
         // Should add way to pass data between
-        camera.DoCameraAction(action, illuminationPercentage);
+        camera.DoCameraAction(action);
 
         // Reset state, could probably set up a queue, but that's beyond the scope of this project
         action = CameraAction::None;
