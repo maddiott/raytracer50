@@ -9,5 +9,6 @@ enum class CameraAction
     LoadObj = 4,
     ClearCanavas = 5,
     RotateWorld = 6,
-    StopRender = 7
+    BreakThings = 7,
+    StopRender = 8
 };

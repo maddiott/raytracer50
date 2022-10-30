@@ -21,6 +21,8 @@ int RaytracerApp::RunApp()
 
     CameraMessage cameraMsg;
 
+    bool breakStuff = false;
+
     while (AppRunning)
     {
         // get events from GUIApp
@@ -38,7 +40,25 @@ int RaytracerApp::RunApp()
 
         // Should add way to pass data between
         action = GuiApp.GetGuiAction();
-        camera.DoCameraAction(action, cameraMsg);
+
+        if (action == CameraAction::BreakThings)
+        {
+            breakStuff = true;
+        }
+        
+        if (action == CameraAction::StopRender)
+        {
+
+            camera.DoCameraAction(action, cameraMsg);
+        }
+        else if (breakStuff)
+        {
+            camera.DoCameraAction(CameraAction::RotateWorld, cameraMsg);
+        }
+        else
+        {
+            camera.DoCameraAction(action, cameraMsg);
+        }
 
         // Reset state, could probably set up a queue, but that's beyond the scope of this project
         action = CameraAction::None;

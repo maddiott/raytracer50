@@ -167,6 +167,8 @@ void Camera::DoCameraAction(CameraAction action, CameraMessage cameraMsg)
             {
                 mIlluminationPercentageToRender = mIlluminationQueue.front();
                 mIlluminationQueue.pop();
+                mACleanCounter = 0;
+                ClearCanvas(mCanvas);
                 mStartTime = std::chrono::system_clock::now();
                 if (mACounter == 0)
                 {
@@ -207,7 +209,7 @@ void Camera::DoCameraAction(CameraAction action, CameraMessage cameraMsg)
         {
             mACleanCounter = 0;
             ClearCanvas(mCanvas);
-            mWorld.ApplyTransformation(point3d(0, 0, 10), 45, mAngle, 0);
+            mWorld.ApplyTransformation(point3d(0, 0, 50), 45, mAngle, 0);
             mAngle += 5;
             mIlluminationPercentageToRender = mIlluminationPercentage;
             mACounter = 0;

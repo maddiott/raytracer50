@@ -166,6 +166,11 @@ CameraMessage Viewport::UpdateGui()
             WriteFrame(FilePath);
         }
 
+        if (ImGui::Button("Break it"))
+        {
+            ActionReturned = CameraAction::BreakThings;
+        }
+
         if (ImGui::Button("Close"))
         {
             ActionReturned = CameraAction::StopRender;
