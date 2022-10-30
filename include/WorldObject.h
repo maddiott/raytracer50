@@ -81,6 +81,45 @@ inline point3d matMult(const mat3d& a, const point3d& v)
     return result;
 };
 
+constexpr double pi = 3.14159265;
+
+inline point3d RotateX(point3d v, double angle)
+{
+    double c = cos(angle * pi / 180);
+    double s = sin(angle * pi / 180);
+
+    mat3d rotmatx = { 1, 0, 0,
+                      0, c, -s,
+                      0, s, c };
+
+    return matMult(rotmatx, v);
+}
+
+inline point3d RotateY(point3d v, double angle)
+{
+    double c = cos(angle * pi / 180);
+    double s = sin(angle * pi / 180);
+
+    mat3d rotmaty = { c, 0, s,
+                      0, 1, 0,
+                     -s, 0, c };
+
+    return matMult(rotmaty, v);
+}
+
+inline point3d RotateZ(point3d v, double angle)
+{
+    double c = cos(angle * pi / 180);
+    double s = sin(angle * pi / 180);
+
+    mat3d rotmatz = { c, -s, 0,
+                      s, c, 0,
+                      0, 0, 1 };
+
+    return matMult(rotmatz, v);
+}
+
+
 // This should go in a different file, but for now I'm just putting it here
 inline double dotProduct(point3d a, point3d b)
 {
@@ -158,7 +197,16 @@ class WorldObject
         void AddSphere(const sphere3d& NewSphere);
 
         point3d TestIntersection(const point3d& rayOrigin, const point3d& rayDirection);
+
         
+    // Should do a friendship or inheritance, but I'm getting tired
+    public:
+        // We're handling triangles and polygons as two cases since triangle intersection is easier
+        std::vector<triangle3d> mTriangles;
+        std::vector<polygon3d> mPolygons;
+        std::vector<sphere3d> mSpheres;
+        color3 mColor;
+
     private:
         point3d SphereIntersection(const point3d& rayOrigin, const point3d& rayDirection);
         point3d TriangleIntersection(const point3d& rayOrigin, const point3d& rayDirection);
@@ -166,10 +214,4 @@ class WorldObject
 
     private:
         WorldObjectType mShapeType;
-        color3 mColor;
-
-        // We're handling triangles and polygons as two cases since triangle intersection is easier
-        std::vector<triangle3d> mTriangles;
-        std::vector<polygon3d> mPolygons;
-        std::vector<sphere3d> mSpheres;
 };

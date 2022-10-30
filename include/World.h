@@ -23,10 +23,13 @@ public:
 
 	bool TestIntersection(point3d rayOrigin, point3d rayDirection, point3d &planeNormal, color3 &color);
 
+	void ApplyTransformation(point3d translation, double xDeg, double yDeg, double zDeg);
+
 private:
 	std::default_random_engine mGenerator;
 	std::uniform_int_distribution<unsigned int> mDistribution;
 	
 	// Need a world list
 	std::vector<std::shared_ptr<WorldObject>> mWorldList;
+	std::vector<std::shared_ptr<WorldObject>> mWorldListRot;
 };

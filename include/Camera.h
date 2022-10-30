@@ -28,7 +28,7 @@ class Camera
 
         void SetCanvas(Viewport& canvas);
 
-        void DoCameraAction(CameraAction action);
+        void DoCameraAction(CameraAction action, CameraMessage cameraMsg);
 
     private:
         int mHeight;
@@ -70,5 +70,7 @@ class Camera
         std::atomic<double> mIlluminationPercentageToRender;
 
         std::queue<double> mIlluminationQueue;
+
+        double mAngle;
 };
 

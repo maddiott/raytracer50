@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <stdexcept>
 
+#include "CameraMessage.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
@@ -42,6 +43,10 @@ Viewport::Viewport(int width, int height) :
     std::string cwdString = cwd.string();
     strcpy(FilePath, cwdString.c_str());
 
+    // Setting up saving default path
+    cwd = std::filesystem::current_path().parent_path() / "teapot-low.obj";
+    cwdString = cwd.string();
+    strcpy(FilePathObj, cwdString.c_str());
     windowShouldClose = false;
 
     // Set up imgui
@@ -97,8 +102,9 @@ void Viewport::UpdateFrame()
         }
 }
 
-void Viewport::UpdateGui()
+CameraMessage Viewport::UpdateGui()
 {
+    CameraMessage cameraMsg(0, "");
     float illuminationSlider = (float) mIlluminationPercentage;
     //ImGui::SetCurrentContext(GuiContext);
     // Start the Dear ImGui frame
@@ -118,6 +124,8 @@ void Viewport::UpdateGui()
             ActionReturned = CameraAction::SliderChanged;
         }
 
+        cameraMsg.mIlluminationPercentage = illuminationSlider;
+
         if (ImGui::Button("Render"))
         {
             ActionReturned = CameraAction::DrawWorld;
@@ -131,6 +139,16 @@ void Viewport::UpdateGui()
         if (ImGui::Button("Gradient"))
         {
             ActionReturned = CameraAction::DrawGradient;
+        }
+
+        ImGui::InputText("##", FilePathObj, IM_ARRAYSIZE(FilePathObj));
+        ImGui::SameLine();
+        if (ImGui::Button("Load Obj File"))
+        {
+            // Do stuff
+            ActionReturned = CameraAction::LoadObj;
+            cameraMsg.mObjFilepath = std::string(FilePathObj);
+            std::cout << "File to load is: " << FilePathObj << '\n';
         }
 
         ImGui::InputText("##", FilePath, IM_ARRAYSIZE(FilePath));
@@ -159,6 +177,8 @@ void Viewport::UpdateGui()
         ImGui::RenderPlatformWindowsDefault();
         glfwMakeContextCurrent(backup_current_context);
     }
+
+    return cameraMsg;
 
 }
 

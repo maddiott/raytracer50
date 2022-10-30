@@ -1,6 +1,7 @@
 // This file defines the OpenGl Canvas Class
 #pragma once
 #include "CameraAction.h"
+#include "CameraMessage.h"
  
 #include <GLFW/glfw3.h>
 #include "imgui.h"
@@ -31,7 +32,7 @@ class Viewport
         int WriteFrame(const std::string &Filename);
 
         void UpdateFrame();
-        void UpdateGui();
+        CameraMessage UpdateGui();
 
         void PollEvents();
 
@@ -67,6 +68,7 @@ class Viewport
 
         std::vector<GLubyte> canvas;
         char FilePath[128];
+        char FilePathObj[128];
 
         CameraAction ActionReturned;
         ImGuiContext* GuiContext;

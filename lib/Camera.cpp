@@ -1,16 +1,19 @@
 #include "Camera.h"
+#include "CameraMessage.h"
+
 #include <iostream>
 #include <numbers>
 #include <vector>
 
 
-Camera::Camera(int height, int width, Viewport &canvas) :
+Camera::Camera(int height, int width, Viewport& canvas) :
     mHeight(480),
     mWidth(640),
     mCanvas(canvas),
     mPixelCoords(mHeight, std::vector<point3d>(mWidth, point3d(0, 0, 0))),
     mIlluminationPercentage(1.0),
-    mIlluminationPercentageToRender(1.0)
+    mIlluminationPercentageToRender(1.0),
+    mAngle(0.0)
 {
 	SetWidth(width);
 	SetHeight(height);
@@ -45,7 +48,7 @@ Camera::Camera(int height, int width, Viewport &canvas) :
     }
 
     //mWorld.LoadSpheres(10);
-    mWorld.LoadCube();
+    //mWorld.LoadCube();
 
     mACounter = 0;
 
@@ -135,8 +138,10 @@ void Camera::RenderGradient()
     mFrameCount++;
 }
 
-void Camera::DoCameraAction(CameraAction action)
+void Camera::DoCameraAction(CameraAction action, CameraMessage cameraMsg)
 {
+    SetIlluminationPercentage(cameraMsg.mIlluminationPercentage);
+
     switch (action)
     {
      // We're going to empty the illumination queue if we have no action to perform
@@ -157,16 +162,22 @@ void Camera::DoCameraAction(CameraAction action)
         // Action queue helps with state sync between gui and renderer
         if (!isRendering)
         {
+            mWorld.ApplyTransformation(point3d(0, -10, 60), 90, mAngle, 0);
             mIlluminationPercentageToRender = mIlluminationPercentage;
             mACounter = 0;
             mStartTime = std::chrono::system_clock::now();
             isRendering = true;
+            mAngle += 5;
         }
         break;
     case CameraAction::DrawGradient:
         RenderGradient();
         break;
     case CameraAction::SliderChanged:
+        break;
+    case CameraAction::LoadObj:
+        std::cout << "Hello from camera, obj is: " << cameraMsg.mObjFilepath << '\n';
+        mWorld.LoadObject(cameraMsg.mObjFilepath);
         break;
     case CameraAction::StopRender:
         isRunning = false;
@@ -210,7 +221,7 @@ void Camera::RenderWorld(int ThreadNumber, int NumThreads)
                     if (norm3d(normal) > 0)
                     {
                         // Find the lamberCosine for shading
-                        point3d illuminationOrigin(0, 5, 0);
+                        point3d illuminationOrigin(0, 0, 0);
                         point3d illuminationDirection(0, -(1 - illuminationPercentage), 1);
 
                         point3d illuminationNormal;

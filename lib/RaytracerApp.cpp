@@ -1,5 +1,7 @@
 #include "RaytracerApp.h"
 #include "Camera.h"
+#include "CameraMessage.h"
+
 #include "Viewport.h"
 #include <iostream>
 
@@ -17,6 +19,8 @@ int RaytracerApp::RunApp()
     CameraAction action = CameraAction::None;
     double illuminationPercentage = 1;
 
+    CameraMessage cameraMsg;
+
     while (AppRunning)
     {
         // get events from GUIApp
@@ -27,14 +31,14 @@ int RaytracerApp::RunApp()
         // Camera will include the world, but will also interact
 
         GuiApp.UpdateFrame();
-        GuiApp.UpdateGui();
+        cameraMsg = GuiApp.UpdateGui();
 
-        illuminationPercentage = GuiApp.GetIlluminationPercentage();
-        camera.SetIlluminationPercentage(illuminationPercentage);
+        //illuminationPercentage = GuiApp.GetIlluminationPercentage();
+        //camera.SetIlluminationPercentage(illuminationPercentage);
 
         // Should add way to pass data between
         action = GuiApp.GetGuiAction();
-        camera.DoCameraAction(action);
+        camera.DoCameraAction(action, cameraMsg);
 
         // Reset state, could probably set up a queue, but that's beyond the scope of this project
         action = CameraAction::None;

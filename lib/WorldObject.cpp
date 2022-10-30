@@ -268,4 +268,3 @@ point3d WorldObject::PolygonIntersection(const point3d& rayOrigin, const point3d
 
     return closestNormal;// point3d(0, 0, 0);
 }
-
