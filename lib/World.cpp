@@ -76,7 +76,7 @@ void World::LoadObject(const string& Filename)
                 vertex.x = vertices[faceVert].x;
                 vertex.y = vertices[faceVert].y;
                 vertex.z = vertices[faceVert].z;
-                polyVert.push_back(vertex);
+                polyVert.push_back(vertex - point3d(1, 1, 1));
             }
 
             normalVector = crossProduct(polyVert[1] - polyVert[0], polyVert[2] - polyVert[1]);
@@ -329,9 +329,9 @@ bool World::TestIntersection(point3d rayOrigin, point3d rayDirection, point3d& n
     return false;
 }
 
-void World::ApplyTransformation(point3d translation, double xDeg, double yDeg, double zDeg)
+bool World::ApplyTransformation(point3d translation, double xDeg, double yDeg, double zDeg)
 {
-    mWorldListRot.clear();
+    mWorldListRot.clear(); 
 
     point3d normalVector;
     triangle3d tempTriangle;
@@ -431,5 +431,6 @@ void World::ApplyTransformation(point3d translation, double xDeg, double yDeg, d
 
     }
 
+    return true;
 }
 

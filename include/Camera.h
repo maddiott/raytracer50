@@ -27,6 +27,7 @@ class Camera
         double GetIlluminationPercentage();
 
         void SetCanvas(Viewport& canvas);
+        void ClearCanvas(Viewport& canvas);
 
         void DoCameraAction(CameraAction action, CameraMessage cameraMsg);
 
@@ -38,6 +39,7 @@ class Camera
         // Want a pointer to the viewport object
         Viewport &mCanvas;
         World mWorld;
+
 
         std::default_random_engine mGenerator;
         std::uniform_int_distribution<unsigned int> mDistribution;
@@ -54,6 +56,7 @@ class Camera
 
         // Decided to try out atomics to help with detached thread synchronization
         std::atomic<int> mACounter;
+        std::atomic<int> mACleanCounter;
 
         // Adding some benchmarking using std chrono
         // Idea from https://gist.github.com/mcleary/b0bf4fa88830ff7c882d
@@ -62,6 +65,7 @@ class Camera
 
         bool isRunning;
         std::atomic<bool> isRendering;
+        std::atomic<bool> isClearing;
 
         int mRenderThreads;
         std::vector<std::thread> mRenderThreadPool;

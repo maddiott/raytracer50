@@ -23,7 +23,7 @@ public:
 
 	bool TestIntersection(point3d rayOrigin, point3d rayDirection, point3d &planeNormal, color3 &color);
 
-	void ApplyTransformation(point3d translation, double xDeg, double yDeg, double zDeg);
+	bool ApplyTransformation(point3d translation, double xDeg, double yDeg, double zDeg);
 
 private:
 	std::default_random_engine mGenerator;

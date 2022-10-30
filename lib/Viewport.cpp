@@ -44,9 +44,10 @@ Viewport::Viewport(int width, int height) :
     strcpy(FilePath, cwdString.c_str());
 
     // Setting up saving default path
-    cwd = std::filesystem::current_path().parent_path() / "teapot-low.obj";
-    cwdString = cwd.string();
-    strcpy(FilePathObj, cwdString.c_str());
+    //cwd = std::filesystem::current_path().parent_path() / "teapot-low.obj";
+    std::filesystem::path cwdObj = std::filesystem::current_path().parent_path() / "Cube.obj";
+    std::string cwdObjString = cwdObj.string();
+    strcpy(FilePathObj, cwdObjString.c_str());
     windowShouldClose = false;
 
     // Set up imgui
@@ -133,7 +134,7 @@ CameraMessage Viewport::UpdateGui()
 
         if (ImGui::Button("Clear"))
         {
-            ClearCanvas();
+            ActionReturned = CameraAction::ClearCanavas;
         }
 
         if (ImGui::Button("Gradient"))
@@ -151,7 +152,12 @@ CameraMessage Viewport::UpdateGui()
             std::cout << "File to load is: " << FilePathObj << '\n';
         }
 
-        ImGui::InputText("##", FilePath, IM_ARRAYSIZE(FilePath));
+        if (ImGui::Button("Rotate World"))
+        {
+            ActionReturned = CameraAction::RotateWorld;
+        }
+
+        ImGui::InputText("## ", FilePath, IM_ARRAYSIZE(FilePath));
         ImGui::SameLine();
         if (ImGui::Button("Save"))
         {
