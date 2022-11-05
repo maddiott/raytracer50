@@ -76,5 +76,6 @@ class Camera
         std::queue<double> mIlluminationQueue;
 
         double mAngle;
+        CameraMessage mCameraState;
 };
 

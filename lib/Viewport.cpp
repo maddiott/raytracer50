@@ -12,7 +12,15 @@
 constexpr int cNumChannels = 3;
 
 Viewport::Viewport(int width, int height) :
-    canvas(width * height * cNumChannels, 0), width(width), height(height),  mIlluminationPercentage(1.0)
+    canvas(width* height* cNumChannels, 0),
+    width(width),
+    height(height),
+    mIlluminationPercentage(1.0),
+    mXAngle(0.0),
+    mYAngle(0.0),
+    mZAngle(0.0),
+    mTranslation(point3d(0, 0, 10)),
+    mAnimate(false)
 {
     ClearCanvas();
 
@@ -103,28 +111,34 @@ void Viewport::UpdateFrame()
         }
 }
 
+// Poll the gui, all of the controls live in here
 CameraMessage Viewport::UpdateGui()
 {
     CameraMessage cameraMsg(0, "");
+    // Get slider variables from object
     float illuminationSlider = (float) mIlluminationPercentage;
-    //ImGui::SetCurrentContext(GuiContext);
+
+    float xAngle = (float) mXAngle;
+    float yAngle = (float) mYAngle;
+    float zAngle = (float) mZAngle;
+    point3d translation = mTranslation;
+
     // Start the Dear ImGui frame
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
+
     ImGui::NewFrame();
     {
         ImGui::Begin("Test Controls");
         ImGui::Text("Renderer Controls");
 
         ImGui::SliderFloat("Illumination angle", &illuminationSlider, 0.0, 1.0, "%.1f");
-
-
-        mIlluminationPercentage = (double)illuminationSlider;
         if (abs(illuminationSlider - mIlluminationPercentage) > 0.05)
         {
             ActionReturned = CameraAction::SliderChanged;
         }
 
+        mIlluminationPercentage = (double)illuminationSlider;
         cameraMsg.mIlluminationPercentage = illuminationSlider;
 
         if (ImGui::Button("Render"))
@@ -154,7 +168,37 @@ CameraMessage Viewport::UpdateGui()
 
         if (ImGui::Button("Rotate World"))
         {
+            // degrees to radians the angle slider is in radians for reasons and I already did the conversion in the world transformation
+            yAngle += 5 * (3.141592653589793238463 / 180.0);
             ActionReturned = CameraAction::RotateWorld;
+            cameraMsg.mYAngle = yAngle;
+            mYAngle = yAngle;
+        }
+
+        // Animate rotation
+        if (ImGui::Button("Animate Rotation"))
+        {
+            mAnimate = not mAnimate;
+            if (mAnimate)
+            {
+                mStartTime = std::chrono::system_clock::now();
+            }
+        }
+
+        if (mAnimate)
+        {
+            // Adding a delay
+            mEndTime = std::chrono::system_clock::now();
+            if ((std::chrono::duration_cast<std::chrono::milliseconds> (mEndTime - mStartTime).count() / 1000.0) > 0.5)
+            {
+                mStartTime = std::chrono::system_clock::now(); 
+
+                // degrees to radians the angle slider is in radians for reasons and I already did the conversion in the world transformation
+                yAngle += 5 * (3.141592653589793238463 / 180.0);
+                ActionReturned = CameraAction::RotateWorld;
+                cameraMsg.mYAngle = yAngle;
+                mYAngle = yAngle;
+            }
         }
 
         ImGui::InputText("## ", FilePath, IM_ARRAYSIZE(FilePath));
@@ -178,7 +222,77 @@ CameraMessage Viewport::UpdateGui()
         }
         ImGui::End();
     }
+
+
+    {
+        ImGui::Begin("Object Controls");
+
+        // Object rotation angles
+        // Comments are to break up the controls
+        // X angle
+        ImGui::SliderAngle("X angle", &xAngle);
+
+        if (abs(xAngle - mXAngle) > 0.001)
+        {
+            ActionReturned = CameraAction::SliderChanged;
+            mXAngle = (double) xAngle;
+        }
+        cameraMsg.mXAngle = xAngle * (180.0 / 3.141592653589793238463);
+
+        // Y angle
+        ImGui::SliderAngle("Y angle", &yAngle);
+
+        if (abs(yAngle - mYAngle) > 0.001)
+        {
+            ActionReturned = CameraAction::SliderChanged;
+            mYAngle = (double)yAngle;
+        }
+
+        cameraMsg.mYAngle = yAngle * (180.0 / 3.141592653589793238463);
+
+        // Z angle
+        ImGui::SliderAngle("Z angle", &zAngle);
+
+        if (abs(zAngle - mZAngle) > 0.001)
+        {
+            ActionReturned = CameraAction::SliderChanged;
+            mZAngle = (double)zAngle;
+        }
+
+        cameraMsg.mZAngle = zAngle * (180.0 / 3.141592653589793238463);
+
+        // Translation x
+        ImGui::InputDouble("x translation", &translation.x);
+        if (abs(translation.x - mTranslation.x) > 0.001)
+        {
+            ActionReturned = CameraAction::SliderChanged;
+        }
+        cameraMsg.mTranslation.x = translation.x;
+
+        // Translation y
+        ImGui::InputDouble("y translation", &translation.y);
+        if (abs(translation.y - mTranslation.y) > 0.001)
+        {
+            ActionReturned = CameraAction::SliderChanged;
+        }
+        cameraMsg.mTranslation.y = translation.y;
+
+        // Translation z
+        ImGui::InputDouble("z translation", &translation.z);
+        if (abs(translation.z - mTranslation.z) > 0.001)
+        {
+            ActionReturned = CameraAction::SliderChanged;
+        }
+        cameraMsg.mTranslation.z = translation.z;
+
+        // Update member variable
+        mTranslation = translation;
+
+        ImGui::End();
+    }
+
     ImGui::Render();
+
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
     if (io->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)

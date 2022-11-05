@@ -48,7 +48,6 @@ int RaytracerApp::RunApp()
         
         if (action == CameraAction::StopRender)
         {
-
             camera.DoCameraAction(action, cameraMsg);
         }
         else if (breakStuff)

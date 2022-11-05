@@ -156,6 +156,9 @@ void Camera::DoCameraAction(CameraAction action, CameraMessage cameraMsg)
 {
     SetIlluminationPercentage(cameraMsg.mIlluminationPercentage);
 
+    // Update camera state to GUI state
+    mCameraState = cameraMsg;
+
     switch (action)
     {
      // We're going to empty the illumination queue if we have no action to perform
@@ -196,10 +199,16 @@ void Camera::DoCameraAction(CameraAction action, CameraMessage cameraMsg)
         RenderGradient();
         break;
     case CameraAction::SliderChanged:
+        // Big thing to do if the slider changed is to apply the transformation to the object
+        if (isRendering == false)
+        {
+            mWorld.ApplyTransformation(cameraMsg.mTranslation, cameraMsg.mXAngle, cameraMsg.mYAngle, cameraMsg.mZAngle);
+        }
         break;
     case CameraAction::LoadObj:
         std::cout << "Hello from camera, obj is: " << cameraMsg.mObjFilepath << '\n';
         mWorld.LoadObject(cameraMsg.mObjFilepath);
+        mWorld.ApplyTransformation(cameraMsg.mTranslation, cameraMsg.mXAngle, cameraMsg.mYAngle, cameraMsg.mZAngle);
         break;
     case CameraAction::StopRender:
         isRunning = false;
@@ -209,8 +218,10 @@ void Camera::DoCameraAction(CameraAction action, CameraMessage cameraMsg)
         {
             mACleanCounter = 0;
             ClearCanvas(mCanvas);
-            mWorld.ApplyTransformation(point3d(0, 0, 50), 45, mAngle, 0);
-            mAngle += 5;
+            mWorld.ApplyTransformation(mCameraState.mTranslation,
+                mCameraState.mXAngle,
+                mCameraState.mYAngle,
+                mCameraState.mZAngle);
             mIlluminationPercentageToRender = mIlluminationPercentage;
             mACounter = 0;
             mStartTime = std::chrono::system_clock::now();

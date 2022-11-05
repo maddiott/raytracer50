@@ -8,6 +8,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
+#include <chrono>
 #include <memory>
 #include <vector>
 #include <string>
@@ -74,6 +75,16 @@ class Viewport
         ImGuiContext* GuiContext;
 
         double mIlluminationPercentage;
+        double mXAngle;
+        double mYAngle;
+        double mZAngle;
+
+        point3d mTranslation;
+
+        bool mAnimate;
+
+        std::chrono::time_point<std::chrono::system_clock> mStartTime;
+        std::chrono::time_point<std::chrono::system_clock> mEndTime;
 
 };
 
