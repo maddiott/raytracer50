@@ -1,7 +1,9 @@
 // This file defines the OpenGl Canvas Class
 #pragma once
+
 #include "CameraAction.h"
 #include "CameraMessage.h"
+#include "RtMathHelp.h"
  
 #include <GLFW/glfw3.h>
 #include "imgui.h"
@@ -68,11 +70,13 @@ class Viewport
         int action = 0;
 
         std::vector<GLubyte> canvas;
-        char FilePath[128];
-        char FilePathObj[128];
+        char mFilePath[128];
+        char mFilePathObj[128];
 
         CameraAction ActionReturned;
         ImGuiContext* GuiContext;
+
+        int mNumRenderThreads;
 
         double mIlluminationPercentage;
         double mXAngle;
@@ -85,6 +89,5 @@ class Viewport
 
         std::chrono::time_point<std::chrono::system_clock> mStartTime;
         std::chrono::time_point<std::chrono::system_clock> mEndTime;
-
 };
 

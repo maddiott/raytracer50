@@ -8,7 +8,7 @@ World::World()
 {
 }
 
-void World::LoadObject(const string& Filename)
+void World::LoadObject(const std::string& Filename)
 {
     std::uniform_int_distribution<unsigned int> mDistribution(0, 255);
 
@@ -80,9 +80,6 @@ void World::LoadObject(const string& Filename)
             }
 
             normalVector = crossProduct(polyVert[1] - polyVert[0], polyVert[2] - polyVert[1]);
-            std::cout << "x: " << normalVector.x
-                << ", y: " << normalVector.y
-                << ", z: " << normalVector.z << '\n';
 
             normVal = norm3d(normalVector);
 
@@ -95,16 +92,8 @@ void World::LoadObject(const string& Filename)
                 normalVector = point3d(0, 0, 0);
             }
 
-            std::cout << "x: " << normalVector.x
-                << ", y: " << normalVector.y
-                << ", z: " << normalVector.z << '\n';
-
-            std::cout << "norm val: " << normVal << '\n';
-            std::cout << "norm of normal vector is: " << norm3d(normalVector) << '\n';
-
             std::shared_ptr<WorldObject> ObjectTemp = std::make_shared<WorldObject>(WorldObject());
             ObjectTemp->SetShapeType(WorldObjectType::Polygon);
-
 
             ObjectTemp->AddPolygon(polygon3d(normalVector, polyVert));
             double r = (uint8_t)mDistribution(mGenerator);

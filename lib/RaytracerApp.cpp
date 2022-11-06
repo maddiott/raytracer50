@@ -14,7 +14,7 @@ RaytracerApp::RaytracerApp()
 
 int RaytracerApp::RunApp()
 {
-    Camera camera(GuiApp.GetHeight(), GuiApp.GetWidth(), GuiApp);
+    Camera camera(GuiApp.GetHeight(), GuiApp.GetWidth(), GuiApp, 1);
 
     CameraAction action = CameraAction::None;
     double illuminationPercentage = 1;
@@ -41,18 +41,9 @@ int RaytracerApp::RunApp()
         // Should add way to pass data between
         action = GuiApp.GetGuiAction();
 
-        if (action == CameraAction::BreakThings)
-        {
-            breakStuff = true;
-        }
-        
         if (action == CameraAction::StopRender)
         {
             camera.DoCameraAction(action, cameraMsg);
-        }
-        else if (breakStuff)
-        {
-            camera.DoCameraAction(CameraAction::RotateWorld, cameraMsg);
         }
         else
         {

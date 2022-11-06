@@ -1,11 +1,11 @@
 #pragma once
 
+#include "RtMathHelp.h"
 #include "WorldObject.h"
 #include <memory>
 #include <random>
 #include <string>
 #include <vector>
-using namespace std;
 
 /* I'm just going to use vectors for simplicity
    This project is about raytracing, not complex memory management
@@ -17,7 +17,7 @@ class World
 public:
 	World();
 
-	void LoadObject(const string &Filename);
+	void LoadObject(const std::string &Filename);
 	void LoadCube();
 	void LoadSpheres(int numSpheres);
 

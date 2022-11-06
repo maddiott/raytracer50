@@ -1,5 +1,6 @@
 #pragma once
 
+#include "RtMathHelp.h"
 #include "Viewport.h"
 #include "World.h"
 
@@ -14,7 +15,7 @@
 class Camera
 {
     public:
-        Camera(int height, int width, Viewport& canvas);
+        Camera(int height, int width, Viewport& canvas, int numThreads);
         ~Camera();
 
         void SetWidth(int width);
@@ -30,6 +31,8 @@ class Camera
         void ClearCanvas(Viewport& canvas);
 
         void DoCameraAction(CameraAction action, CameraMessage cameraMsg);
+
+        void SetRenderThreads(int RenderThreads);
 
     private:
         int mHeight;
@@ -67,6 +70,7 @@ class Camera
         std::atomic<bool> isRendering;
         std::atomic<bool> isClearing;
 
+        // Threads
         int mRenderThreads;
         std::vector<std::thread> mRenderThreadPool;
 

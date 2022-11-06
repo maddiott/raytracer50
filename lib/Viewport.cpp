@@ -1,6 +1,8 @@
 #include "Viewport.h"
+
 #include <filesystem>
 #include <stdexcept>
+#include <thread>
 
 #include "CameraMessage.h"
 
@@ -20,7 +22,8 @@ Viewport::Viewport(int width, int height) :
     mYAngle(0.0),
     mZAngle(0.0),
     mTranslation(point3d(0, 0, 10)),
-    mAnimate(false)
+    mAnimate(false),
+    mNumRenderThreads(1)
 {
     ClearCanvas();
 
@@ -47,15 +50,15 @@ Viewport::Viewport(int width, int height) :
     glfwSwapInterval(1);
 
     // Setting up saving default path
-    std::filesystem::path cwd = std::filesystem::current_path() / "TestRender.png";
+    std::filesystem::path cwd = std::filesystem::current_path().parent_path() / "TestRender.png";
     std::string cwdString = cwd.string();
-    strcpy(FilePath, cwdString.c_str());
+    strcpy(mFilePath, cwdString.c_str());
 
     // Setting up saving default path
     //cwd = std::filesystem::current_path().parent_path() / "teapot-low.obj";
     std::filesystem::path cwdObj = std::filesystem::current_path().parent_path() / "Cube.obj";
     std::string cwdObjString = cwdObj.string();
-    strcpy(FilePathObj, cwdObjString.c_str());
+    strcpy(mFilePathObj, cwdObjString.c_str());
     windowShouldClose = false;
 
     // Set up imgui
@@ -101,6 +104,7 @@ void Viewport::PollEvents()
         glfwPollEvents();
 }
 
+// Handle the OpenGl updates
 void Viewport::UpdateFrame()
 {
         glDrawPixels(width, height, GL_RGB, GL_UNSIGNED_BYTE, canvas.data());
@@ -114,7 +118,11 @@ void Viewport::UpdateFrame()
 // Poll the gui, all of the controls live in here
 CameraMessage Viewport::UpdateGui()
 {
-    CameraMessage cameraMsg(0, "");
+    CameraMessage cameraMsg;
+    // Number of Rendering Threads
+    auto MaxThreads = std::thread::hardware_concurrency() / 2;
+    int NumRenderThreads = mNumRenderThreads;
+
     // Get slider variables from object
     float illuminationSlider = (float) mIlluminationPercentage;
 
@@ -130,16 +138,16 @@ CameraMessage Viewport::UpdateGui()
     ImGui::NewFrame();
     {
         ImGui::Begin("Test Controls");
-        ImGui::Text("Renderer Controls");
 
-        ImGui::SliderFloat("Illumination angle", &illuminationSlider, 0.0, 1.0, "%.1f");
-        if (abs(illuminationSlider - mIlluminationPercentage) > 0.05)
+        ImGui::SliderInt("Render Threads", &NumRenderThreads, 1, MaxThreads);
+        if (NumRenderThreads != mNumRenderThreads)
         {
-            ActionReturned = CameraAction::SliderChanged;
+            ActionReturned = CameraAction::ChangeRenderThreads;
         }
 
-        mIlluminationPercentage = (double)illuminationSlider;
-        cameraMsg.mIlluminationPercentage = illuminationSlider;
+        mNumRenderThreads = NumRenderThreads;
+        cameraMsg.mNumRenderThreads = mNumRenderThreads;
+
 
         if (ImGui::Button("Render"))
         {
@@ -156,20 +164,20 @@ CameraMessage Viewport::UpdateGui()
             ActionReturned = CameraAction::DrawGradient;
         }
 
-        ImGui::InputText("##", FilePathObj, IM_ARRAYSIZE(FilePathObj));
+        ImGui::InputText("##", mFilePathObj, IM_ARRAYSIZE(mFilePathObj));
         ImGui::SameLine();
         if (ImGui::Button("Load Obj File"))
         {
             // Do stuff
             ActionReturned = CameraAction::LoadObj;
-            cameraMsg.mObjFilepath = std::string(FilePathObj);
-            std::cout << "File to load is: " << FilePathObj << '\n';
+            cameraMsg.mObjFilepath = std::string(mFilePathObj);
+            std::cout << "File to load is: " << mFilePathObj << '\n';
         }
 
         if (ImGui::Button("Rotate World"))
         {
             // degrees to radians the angle slider is in radians for reasons and I already did the conversion in the world transformation
-            yAngle += 5 * (3.141592653589793238463 / 180.0);
+            yAngle += 5 * (pi / 180.0);
             ActionReturned = CameraAction::RotateWorld;
             cameraMsg.mYAngle = yAngle;
             mYAngle = yAngle;
@@ -201,18 +209,13 @@ CameraMessage Viewport::UpdateGui()
             }
         }
 
-        ImGui::InputText("## ", FilePath, IM_ARRAYSIZE(FilePath));
+        ImGui::InputText("## ", mFilePath, IM_ARRAYSIZE(mFilePath));
         ImGui::SameLine();
         if (ImGui::Button("Save"))
         {
             // Do stuff
-            std::cout << "File to save is: " << FilePath << '\n';
-            WriteFrame(FilePath);
-        }
-
-        if (ImGui::Button("Break it"))
-        {
-            ActionReturned = CameraAction::BreakThings;
+            std::cout << "File to save is: " << mFilePath << '\n';
+            WriteFrame(mFilePath);
         }
 
         if (ImGui::Button("Close"))
@@ -227,6 +230,15 @@ CameraMessage Viewport::UpdateGui()
     {
         ImGui::Begin("Object Controls");
 
+        ImGui::SliderFloat("Illumination angle", &illuminationSlider, 0.0, 1.0, "%.1f");
+        if (abs(illuminationSlider - mIlluminationPercentage) > 0.05)
+        {
+            ActionReturned = CameraAction::SliderChanged;
+        }
+
+        mIlluminationPercentage = (double)illuminationSlider;
+        cameraMsg.mIlluminationPercentage = illuminationSlider;
+
         // Object rotation angles
         // Comments are to break up the controls
         // X angle
@@ -237,7 +249,7 @@ CameraMessage Viewport::UpdateGui()
             ActionReturned = CameraAction::SliderChanged;
             mXAngle = (double) xAngle;
         }
-        cameraMsg.mXAngle = xAngle * (180.0 / 3.141592653589793238463);
+        cameraMsg.mXAngle = xAngle * (180.0 / pi);
 
         // Y angle
         ImGui::SliderAngle("Y angle", &yAngle);
@@ -248,7 +260,7 @@ CameraMessage Viewport::UpdateGui()
             mYAngle = (double)yAngle;
         }
 
-        cameraMsg.mYAngle = yAngle * (180.0 / 3.141592653589793238463);
+        cameraMsg.mYAngle = yAngle * (180.0 / pi);
 
         // Z angle
         ImGui::SliderAngle("Z angle", &zAngle);
@@ -259,7 +271,7 @@ CameraMessage Viewport::UpdateGui()
             mZAngle = (double)zAngle;
         }
 
-        cameraMsg.mZAngle = zAngle * (180.0 / 3.141592653589793238463);
+        cameraMsg.mZAngle = zAngle * (180.0 / pi);
 
         // Translation x
         ImGui::InputDouble("x translation", &translation.x);
@@ -341,7 +353,7 @@ void Viewport::WritePixel(int x, int y, GLubyte r, GLubyte g, GLubyte b)
 int Viewport::WriteFrame(const std::string &Filename)
 {
     // OpenGl rendering is flipped, so if we reverse the stride it comes out in the right order
-    int errorValue = stbi_write_png(FilePath,
+    int errorValue = stbi_write_png(mFilePath,
         width,
         height,
         cNumChannels,

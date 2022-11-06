@@ -6,7 +6,7 @@
 #include <vector>
 
 
-Camera::Camera(int height, int width, Viewport& canvas) :
+Camera::Camera(int height, int width, Viewport& canvas, int numThreads) :
     mHeight(480),
     mWidth(640),
     mCanvas(canvas),
@@ -50,7 +50,7 @@ Camera::Camera(int height, int width, Viewport& canvas) :
     // Looks like superscalar is working in my favor, this is more threads than I have cpu cores and I think it's a local min in terms of execution time
     // It seems like we get major stability issues with threads > cores, so maybe don't
     auto availableCores = std::thread::hardware_concurrency();
-    mRenderThreads = 6;
+    mRenderThreads = numThreads;
 
     if (mRenderThreads > (availableCores / 2))
     {
@@ -80,6 +80,49 @@ Camera::~Camera()
         {
             t.join();
         }
+    }
+}
+
+void Camera::SetRenderThreads(int RenderThreads)
+{
+    // Clean up the old thread pool
+    isRunning = false;
+    for (auto& t : mRenderThreadPool)
+    {
+        if (t.joinable())
+        {
+            t.join();
+        }
+    }
+
+    // We don't want to introduce instability because we're rendering on too many cores
+    auto availableCores = std::thread::hardware_concurrency();
+
+    // I'm going to assume that this system is modern enough for hyperthreading
+    int MaxCores = availableCores / 2;
+
+    // Need at least one thread
+    MaxCores = (MaxCores >= 1) ? MaxCores : 1;
+
+    if (RenderThreads > MaxCores)
+    {
+        mRenderThreads = RenderThreads;
+    }
+    else if (RenderThreads < 1)
+    {
+        mRenderThreads = 1;
+    }
+    else
+    {
+        mRenderThreads = RenderThreads;
+    }
+
+    // Make new thread pool
+    isRunning = true;
+    for (int i = 1; i <= mRenderThreads; i++)
+    {
+        std::thread t(&Camera::RenderWorld, this, i, mRenderThreads);
+        mRenderThreadPool.push_back(std::move(t));
     }
 }
 
@@ -231,6 +274,9 @@ void Camera::DoCameraAction(CameraAction action, CameraMessage cameraMsg)
             }
         }
         break;
+    case CameraAction::ChangeRenderThreads:
+        SetRenderThreads(cameraMsg.mNumRenderThreads);
+        break;
     case CameraAction::ClearCanavas:
         if (isRendering == false)
         {
@@ -311,22 +357,20 @@ void Camera::RenderWorld(int ThreadNumber, int NumThreads)
                         point3d illuminationOrigin(0, 5, 0);
                         point3d illuminationDirection(0, -(1 - illuminationPercentage), 1);
 
-                        point3d illuminationNormal;
+                        /*point3d illuminationNormal;
                         illuminationDirection = illuminationDirection / norm3d(illuminationDirection);
-                        mWorld.TestIntersection(illuminationOrigin, illuminationDirection, illuminationNormal, color);
+                        mWorld.TestIntersection(illuminationOrigin, illuminationDirection, illuminationNormal, color);*/
 
                         double lambertCosine = dotProduct(normal, illuminationDirection);
-                        point3d colorToDraw;
+                        color3 colorToDraw;
 
-                        colorToDraw.x = color.r * abs(lambertCosine);
-                        colorToDraw.y = color.g * abs(lambertCosine);
-                        colorToDraw.z = color.b * abs(lambertCosine);
+                        colorToDraw = abs(lambertCosine) * color;
 
                         mCanvas.WritePixel(j,
                             i,
-                            (GLubyte)colorToDraw.x,
-                            (GLubyte)colorToDraw.y,
-                            (GLubyte)colorToDraw.z);
+                            (GLubyte)colorToDraw.r,
+                            (GLubyte)colorToDraw.g,
+                            (GLubyte)colorToDraw.b);
                     }
 
                 }
