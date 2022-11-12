@@ -1,3 +1,8 @@
+// This class defines the renderer
+// It is responsible for managing the state received from the gui logic
+// It handles creation of rendering threads, and their destruction
+// The world object is associated with the camera object
+// The camera creates the rays that interact with the scene
 #pragma once
 
 #include "RtMathHelp.h"
@@ -42,7 +47,6 @@ class Camera
         // Want a pointer to the viewport object
         Viewport &mCanvas;
         World mWorld;
-
 
         std::default_random_engine mGenerator;
         std::uniform_int_distribution<unsigned int> mDistribution;

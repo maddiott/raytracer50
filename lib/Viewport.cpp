@@ -14,7 +14,7 @@
 constexpr int cNumChannels = 3;
 
 Viewport::Viewport(int width, int height) :
-    canvas(width* height* cNumChannels, 0),
+    canvas(width * height * cNumChannels, 0),
     width(width),
     height(height),
     mIlluminationPercentage(1.0),
@@ -88,6 +88,7 @@ Viewport::Viewport(int width, int height) :
 
 }
 
+// Handle cleanup in the object destructor
 Viewport::~Viewport()
 {
     // Cleanup
@@ -99,6 +100,7 @@ Viewport::~Viewport()
     glfwTerminate();
 }
 
+// There are some keyboard shortcuts in the OpenGl window
 void Viewport::PollEvents()
 {
         glfwPollEvents();

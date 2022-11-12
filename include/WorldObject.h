@@ -1,4 +1,6 @@
 #pragma once
+// This class defines the types of objects that can be present in the scene
+// It also implements the intersection routines for each object class
 
 #include "RtMathHelp.h"
 
@@ -35,7 +37,7 @@ class WorldObject
         std::vector<triangle3d> mTriangles;
         std::vector<polygon3d> mPolygons;
         std::vector<sphere3d> mSpheres;
-        color3 mColor;
+        color3 mColor = color3(0, 0, 0);
 
     private:
         point3d SphereIntersection(const point3d& rayOrigin, const point3d& rayDirection);

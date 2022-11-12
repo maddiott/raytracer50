@@ -1,4 +1,7 @@
 // This file defines the OpenGl Canvas Class
+// It also acts as a wrapper around the dear imgui example code
+// The gui logic is implemented here as well and is decoupled from the
+// Renderer logic
 #pragma once
 
 #include "CameraAction.h"
@@ -48,7 +51,9 @@ class Viewport
 
     // Private functions
     private:
-        //  c callbacks are fun in c++ classes
+        // c callbacks are fun in c++ classes
+        // This is just a way of making it so that GLFW (OpenGl)
+        // callbacks are available in c++ classes
         //https://stackoverflow.com/questions/44711290/passing-in-c-method-as-a-function-pointer
         void bind();
         
@@ -74,8 +79,11 @@ class Viewport
         char mFilePathObj[128];
 
         CameraAction ActionReturned;
+        
+        // This should be a smart pointer, but the cleanup code is included from the imgui example
         ImGuiContext* GuiContext;
 
+        // Dynamic thread 
         int mNumRenderThreads;
 
         double mIlluminationPercentage;
@@ -85,8 +93,10 @@ class Viewport
 
         point3d mTranslation;
 
+        // 
         bool mAnimate;
 
+        // Render timer
         std::chrono::time_point<std::chrono::system_clock> mStartTime;
         std::chrono::time_point<std::chrono::system_clock> mEndTime;
 };

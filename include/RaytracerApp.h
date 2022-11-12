@@ -1,4 +1,6 @@
 #pragma once
+// This where the subcomponents of the app are called
+// The main render loop is here
 
 #include "Viewport.h"
 

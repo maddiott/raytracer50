@@ -1,5 +1,11 @@
 #pragma once
 
+/* Math helper library for basic vector operations
+  All functions are inlined due to not wanting to incur function call overhead
+  This might be a wash due to instruction cache utilization, but I believe this
+  workload is compute bound
+*/
+
 #include <cmath>
 #include <vector>
 
@@ -183,6 +189,6 @@ struct triangle3d
 
 struct polygon3d
 {
-    point3d normal;
+    point3d normal = point3d(0, 0, 0);
     std::vector<point3d> vertices;
 };
