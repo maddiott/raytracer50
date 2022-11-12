@@ -8,7 +8,10 @@ include_directories("C:/Program Files\ (x86)/GLFW/include")
 add_subdirectory("OutsideLibs")
 add_subdirectory("lib")
 
+find_package(OpenGL REQUIRED)
+
 set(SOURCE_FILES main.cpp)
 
 add_executable(raytrace50 ${SOURCE_FILES})
-target_link_libraries(raytrace50 glfw Opengl32 IMGUI RAYTRACER)
+#target_link_libraries(raytrace50 glfw Opengl32 IMGUI RAYTRACER)
+target_link_libraries(raytrace50 glfw ${OPENGL_LIBRARIES} IMGUI RAYTRACER)

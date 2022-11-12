@@ -204,36 +204,23 @@ void Camera::DoCameraAction(CameraAction action, CameraMessage cameraMsg)
 
     switch (action)
     {
-     // We're going to empty the illumination queue if we have no action to perform
     case CameraAction::None:
-        if ((!isRendering) && (mIlluminationQueue.size() > 0))
-        {
-            mACounter = 0;
-            if (mIlluminationQueue.size() > 0)
-            {
-                mIlluminationPercentageToRender = mIlluminationQueue.front();
-                mIlluminationQueue.pop();
-                mACleanCounter = 0;
-                ClearCanvas(mCanvas);
-                mStartTime = std::chrono::system_clock::now();
-                if (mACounter == 0)
-                {
-                    isRendering = true;
-                }
-            }
-        }
         break;
     case CameraAction::DrawWorld:
         // Action queue helps with state sync between gui and renderer
         if (isRendering == false)
         {
+            // Update transformation to be current with the GUI
+            mWorld.ApplyTransformation(cameraMsg.mTranslation, cameraMsg.mXAngle, cameraMsg.mYAngle, cameraMsg.mZAngle);
             mACleanCounter = 0;
             ClearCanvas(mCanvas);
+            // Update illumination angle to match GUI
             mIlluminationPercentageToRender = mIlluminationPercentage;
             mACounter = 0;
             mStartTime = std::chrono::system_clock::now();
             if (mACounter == 0)
             {
+                // Go!
                 isRendering = true;
             }
         }
@@ -357,10 +344,6 @@ void Camera::RenderWorld(int ThreadNumber, int NumThreads)
                         point3d illuminationOrigin(0, 5, 0);
                         point3d illuminationDirection(0, -(1 - illuminationPercentage), 1);
 
-                        /*point3d illuminationNormal;
-                        illuminationDirection = illuminationDirection / norm3d(illuminationDirection);
-                        mWorld.TestIntersection(illuminationOrigin, illuminationDirection, illuminationNormal, color);*/
-
                         double lambertCosine = dotProduct(normal, illuminationDirection);
                         color3 colorToDraw;
 
@@ -373,6 +356,14 @@ void Camera::RenderWorld(int ThreadNumber, int NumThreads)
                             (GLubyte)colorToDraw.b);
                     }
 
+                }
+
+                // Allow a short circuit once per line
+                // The idea here is that checking less frequently will slow the render loop down less
+                if (!isRunning)
+                {
+                    // Short circuit the render if the program is closing
+                    break;
                 }
             }
 

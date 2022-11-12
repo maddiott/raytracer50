@@ -18,10 +18,10 @@ Viewport::Viewport(int width, int height) :
     width(width),
     height(height),
     mIlluminationPercentage(1.0),
-    mXAngle(0.0),
+    mXAngle(pi / 2),
     mYAngle(0.0),
     mZAngle(0.0),
-    mTranslation(point3d(0, 0, 10)),
+    mTranslation(point3d(0, 0, 70)),
     mAnimate(false),
     mNumRenderThreads(1)
 {
@@ -56,7 +56,7 @@ Viewport::Viewport(int width, int height) :
 
     // Setting up saving default path
     //cwd = std::filesystem::current_path().parent_path() / "teapot-low.obj";
-    std::filesystem::path cwdObj = std::filesystem::current_path().parent_path() / "Cube.obj";
+    std::filesystem::path cwdObj = std::filesystem::current_path().parent_path() / "teapot.obj";
     std::string cwdObjString = cwdObj.string();
     strcpy(mFilePathObj, cwdObjString.c_str());
     windowShouldClose = false;
@@ -128,10 +128,14 @@ CameraMessage Viewport::UpdateGui()
     // Get slider variables from object
     float illuminationSlider = (float) mIlluminationPercentage;
 
+    // I'm mostly using doubles and Dear ImGui uses floats for sliders
     float xAngle = (float) mXAngle;
     float yAngle = (float) mYAngle;
     float zAngle = (float) mZAngle;
-    point3d translation = mTranslation;
+
+    float xTrans = (float) mTranslation.x;
+    float yTrans = (float) mTranslation.y;
+    float zTrans = (float) mTranslation.z;
 
     // Start the Dear ImGui frame
     ImGui_ImplOpenGL3_NewFrame();
@@ -228,7 +232,6 @@ CameraMessage Viewport::UpdateGui()
         ImGui::End();
     }
 
-
     {
         ImGui::Begin("Object Controls");
 
@@ -276,31 +279,31 @@ CameraMessage Viewport::UpdateGui()
         cameraMsg.mZAngle = zAngle * (180.0 / pi);
 
         // Translation x
-        ImGui::InputDouble("x translation", &translation.x);
-        if (abs(translation.x - mTranslation.x) > 0.001)
+        ImGui::SliderFloat("x translation", &xTrans, -10.0f, 10.0f, "%.1f");
+        if (abs(xTrans - mTranslation.x) > 0.001)
         {
             ActionReturned = CameraAction::SliderChanged;
         }
-        cameraMsg.mTranslation.x = translation.x;
+        cameraMsg.mTranslation.x = (double) xTrans;
 
         // Translation y
-        ImGui::InputDouble("y translation", &translation.y);
-        if (abs(translation.y - mTranslation.y) > 0.001)
+        ImGui::SliderFloat("y translation", &yTrans, -10.0f, 10.0f, "%.1f");
+        if (abs(yTrans - mTranslation.y) > 0.001)
         {
             ActionReturned = CameraAction::SliderChanged;
         }
-        cameraMsg.mTranslation.y = translation.y;
+        cameraMsg.mTranslation.y = yTrans;
 
         // Translation z
-        ImGui::InputDouble("z translation", &translation.z);
-        if (abs(translation.z - mTranslation.z) > 0.001)
+        ImGui::SliderFloat("z translation", &zTrans, 0.0f, 200.0f, "%.1f");
+        if (abs(zTrans - mTranslation.z) > 0.001)
         {
             ActionReturned = CameraAction::SliderChanged;
         }
-        cameraMsg.mTranslation.z = translation.z;
+        cameraMsg.mTranslation.z = zTrans;
 
         // Update member variable
-        mTranslation = translation;
+        mTranslation = cameraMsg.mTranslation;
 
         ImGui::End();
     }

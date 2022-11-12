@@ -35,9 +35,6 @@ int RaytracerApp::RunApp()
         GuiApp.UpdateFrame();
         cameraMsg = GuiApp.UpdateGui();
 
-        //illuminationPercentage = GuiApp.GetIlluminationPercentage();
-        //camera.SetIlluminationPercentage(illuminationPercentage);
-
         // Should add way to pass data between
         action = GuiApp.GetGuiAction();
 
@@ -56,6 +53,12 @@ int RaytracerApp::RunApp()
         // Check if we should terminate the app
         AppRunning = !GuiApp.GetWindowShouldClose();
     }
+    std::cout << "Window should close\n";
+
+    // If we close the app from the OpenGl context, the program will hang
+    // To solve this we just tell the camera to stop rendering
+    action = CameraAction::StopRender;
+    camera.DoCameraAction(action, cameraMsg);
 
     return 0;
 }
