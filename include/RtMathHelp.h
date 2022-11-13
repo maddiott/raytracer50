@@ -159,14 +159,14 @@ struct point2d
     double U, V;
 };
 
-struct color3
+struct colorRgb
 {
     double r, g, b;
 };
 
-inline color3 operator*(double b, const color3& a)
+inline colorRgb operator*(double b, const colorRgb& a)
 {
-    color3 result(0, 0, 0);
+    colorRgb result(0, 0, 0);
 
     result.r = b * a.r;
     result.g = b * a.g;
@@ -174,6 +174,130 @@ inline color3 operator*(double b, const color3& a)
 
     return result;
 }
+
+struct colorHsv
+{
+    double h, s, v;
+};
+
+// Formula from https://www.rapidtables.com/convert/color/rgb-to-hsv.html
+inline colorHsv rgbToHsv(colorRgb colorIn)
+{
+    colorHsv colorOut(0, 0, 0);
+
+    double sR = colorIn.r / 255;
+    double sG = colorIn.g / 255;
+    double sB = colorIn.b / 255;
+
+    double cMax, cMin, delta;
+
+    if ((sR <= sG) && (sR <= sB))
+    {
+        cMin = sR;
+    }
+    else if ((sG <= sR) && (sG <= sB))
+    {
+        cMin = sG;
+    }
+    else
+    {
+        cMin = sB;
+    }
+
+    if ((sR >= sG) && (sR >= sB))
+    {
+        cMax = sR;
+
+    }
+    else if ((sG >= sR) && (sG >= sB))
+    {
+        cMax = sG;
+    }
+    else
+    {
+        cMax = sB;
+    }
+
+    delta = cMax - cMin;
+
+    if (delta == 0)
+    {
+        colorOut.h = 0;
+    }
+    else if (cMax == sR)
+    {
+        colorOut.h = 60 * fmod(((sG - sB) / delta), 6);
+    }
+    else if (cMax == sG)
+    {
+        colorOut.h = 60 * (((sB - sR) / delta) + 2);
+    }
+    else
+    {
+        colorOut.h = 60 * (((sR - sG) / delta) + 4);
+    }
+
+    colorOut.s = (cMax == 0) ? 0 : delta / cMax;
+
+    colorOut.v = cMax;
+
+    return colorOut;
+}
+
+// https://www.rapidtables.com/convert/color/hsv-to-rgb.html
+inline colorRgb hsvToRgb(colorHsv colorIn)
+{
+    colorRgb colorOut;
+
+    double c = colorIn.v * colorIn.s;
+    double x = c * (1
+        - abs(fmod((colorIn.h / 60), 2) - 1));
+    double m = colorIn.v - c;
+
+    if ((colorIn.h <= 0) && (colorIn.h < 60))
+    {
+        colorOut.r = c;
+        colorOut.g = x;
+        colorOut.b = 0;
+    }
+    else if ((colorIn.h <= 60) && (colorIn.h < 120))
+    {
+        colorOut.r = x;
+        colorOut.g = c;
+        colorOut.b = 0;
+    }
+    else if ((colorIn.h <= 120) && (colorIn.h < 180))
+    {
+        colorOut.r = 0;
+        colorOut.g = c;
+        colorOut.b = x;
+    }
+    else if ((colorIn.h <= 180) && (colorIn.h < 240))
+    {
+        colorOut.r = 0;
+        colorOut.g = x;
+        colorOut.b = c;
+    }
+    else if ((colorIn.h <= 240) && (colorIn.h < 300))
+    {
+        colorOut.r = x;
+        colorOut.g = 0;
+        colorOut.b = c;
+    }
+    else
+    {
+        colorOut.r = c;
+        colorOut.g = 0;
+        colorOut.b = x;
+    }
+
+    colorOut.r = (colorOut.r + m) * 255;
+    colorOut.g = (colorOut.g + m) * 255;
+    colorOut.b = (colorOut.b + m) * 255;
+
+    return colorOut;
+}
+
 
 struct sphere3d
 {
