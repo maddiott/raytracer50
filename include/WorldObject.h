@@ -21,8 +21,8 @@ class WorldObject
         void SetShapeType(WorldObjectType ShapeType);
         WorldObjectType GetShapeType();
 
-        void SetColor(color3 color);
-        color3 GetColor();
+        void SetColor(colorRgb color);
+        colorRgb GetColor();
 
         void AddTriangle(const triangle3d& NewTriangle);
         void AddPolygon(const polygon3d& NewPolygon);
@@ -37,7 +37,7 @@ class WorldObject
         std::vector<triangle3d> mTriangles;
         std::vector<polygon3d> mPolygons;
         std::vector<sphere3d> mSpheres;
-        color3 mColor = color3(0, 0, 0);
+        colorRgb mColor = colorRgb(0, 0, 0);
 
     private:
         point3d SphereIntersection(const point3d& rayOrigin, const point3d& rayDirection);

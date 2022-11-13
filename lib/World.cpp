@@ -27,6 +27,10 @@ void World::LoadObject(const std::string& Filename)
     int face;
     std::vector<int> newFace;
 
+    double r = (uint8_t) mDistribution(mGenerator);
+    double g = (uint8_t) mDistribution(mGenerator);
+    double b = (uint8_t) mDistribution(mGenerator);
+
     // Parse the obj file
     if (objFile.is_open())
     {
@@ -100,11 +104,8 @@ void World::LoadObject(const std::string& Filename)
             ObjectTemp->SetShapeType(WorldObjectType::Polygon);
 
             ObjectTemp->AddPolygon(polygon3d(normalVector, polyVert));
-            double r = (uint8_t)mDistribution(mGenerator);
-            double g = (uint8_t)mDistribution(mGenerator);
-            double b = (uint8_t)mDistribution(mGenerator);
 
-            ObjectTemp->SetColor(color3(255, 0, 0));
+            ObjectTemp->SetColor(colorRgb(r, g, b));
 
             std::shared_ptr<WorldObject> pObject(ObjectTemp);
             mWorldList.push_back(std::move(pObject));
@@ -149,11 +150,10 @@ void World::LoadSpheres(int numSpheres)
         sphereTemp.center = point3d(centX, centY, centZ);
         sphereTemp.radius = radius;
 
-        ObjectTemp->SetColor(color3(r, g, b));
+        ObjectTemp->SetColor(colorRgb(r, g, b));
         ObjectTemp->AddSphere(sphereTemp);
 
         std::unique_ptr<WorldObject> pObject(ObjectTemp);
-
 
         mWorldList.push_back(std::move(pObject));
     }
@@ -161,7 +161,13 @@ void World::LoadSpheres(int numSpheres)
 
 }
 
-bool World::TestIntersection(point3d rayOrigin, point3d rayDirection, point3d& normal, color3& color)
+void World::UnloadObject()
+{
+    mWorldListRot.clear(); 
+    mWorldList.clear(); 
+}
+
+bool World::TestIntersection(point3d rayOrigin, point3d rayDirection, point3d& normal, colorRgb& color)
 {
 	point3d intersectionNormal(0, 0, 0);
 
@@ -245,11 +251,8 @@ bool World::ApplyTransformation(point3d translation, double xDeg, double yDeg, d
             tempTriangle.c = tempTriangle.c + translation;
 
             ObjectTemp->AddTriangle(triangle3d(triangle));
-            double r = (uint8_t)mDistribution(mGenerator);
-            double g = (uint8_t)mDistribution(mGenerator);
-            double b = (uint8_t)mDistribution(mGenerator);
 
-            ObjectTemp->SetColor(color3(r, g, b));
+            ObjectTemp->SetColor(object->GetColor());
 
 
             std::shared_ptr<WorldObject> pObject(ObjectTemp);
@@ -281,11 +284,8 @@ bool World::ApplyTransformation(point3d translation, double xDeg, double yDeg, d
                 normalVector = RotateZ(normalVector, zDeg);
 
                 ObjectTemp->AddPolygon(polygon3d(normalVector, tempPoly.vertices));
-                double r = (uint8_t)mDistribution(mGenerator);
-                double g = (uint8_t)mDistribution(mGenerator);
-                double b = (uint8_t)mDistribution(mGenerator);
 
-                ObjectTemp->SetColor(color3(r, g, b));
+                ObjectTemp->SetColor(object->GetColor());
 
 
                 std::shared_ptr<WorldObject> pObject(ObjectTemp);

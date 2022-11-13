@@ -236,9 +236,13 @@ void Camera::DoCameraAction(CameraAction action, CameraMessage cameraMsg)
         }
         break;
     case CameraAction::LoadObj:
-        std::cout << "Hello from camera, obj is: " << cameraMsg.mObjFilepath << '\n';
-        mWorld.LoadObject(cameraMsg.mObjFilepath);
-        mWorld.ApplyTransformation(cameraMsg.mTranslation, cameraMsg.mXAngle, cameraMsg.mYAngle, cameraMsg.mZAngle);
+        if (isRendering == false)
+        {
+            mWorld.UnloadObject();
+            std::cout << "Hello from camera, obj is: " << cameraMsg.mObjFilepath << '\n';
+            mWorld.LoadObject(cameraMsg.mObjFilepath);
+            mWorld.ApplyTransformation(cameraMsg.mTranslation, cameraMsg.mXAngle, cameraMsg.mYAngle, cameraMsg.mZAngle);
+        }
         break;
     case CameraAction::StopRender:
         isRunning = false;
@@ -332,7 +336,7 @@ void Camera::RenderWorld(int ThreadNumber, int NumThreads)
                     RayNormalVector = mPixelCoords[i][j] / magnitude;
 
                     // See if the ray hits anything
-                    color3 color(0, 0, 0);
+                    colorRgb color(0, 0, 0);
                     point3d normal(0, 0, 0);
 
                     mWorld.TestIntersection(mCameraOrigin, RayNormalVector, normal, color);
@@ -345,7 +349,7 @@ void Camera::RenderWorld(int ThreadNumber, int NumThreads)
                         point3d illuminationDirection(0, -(1 - illuminationPercentage), 1);
 
                         double lambertCosine = dotProduct(normal, illuminationDirection);
-                        color3 colorToDraw;
+                        colorRgb colorToDraw;
 
                         colorToDraw = abs(lambertCosine) * color;
 
@@ -355,7 +359,6 @@ void Camera::RenderWorld(int ThreadNumber, int NumThreads)
                             (GLubyte)colorToDraw.g,
                             (GLubyte)colorToDraw.b);
                     }
-
                 }
 
                 // Allow a short circuit once per line

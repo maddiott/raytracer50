@@ -22,7 +22,9 @@ public:
 	void LoadObject(const std::string &Filename);
 	void LoadSpheres(int numSpheres);
 
-	bool TestIntersection(point3d rayOrigin, point3d rayDirection, point3d &planeNormal, color3 &color);
+	void UnloadObject();
+
+	bool TestIntersection(point3d rayOrigin, point3d rayDirection, point3d &planeNormal, colorRgb &color);
 
 	bool ApplyTransformation(point3d translation, double xDeg, double yDeg, double zDeg);
 

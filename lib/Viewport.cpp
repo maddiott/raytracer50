@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <stdexcept>
 #include <thread>
+#include <vector>
 
 #include "CameraMessage.h"
 
@@ -33,7 +34,7 @@ Viewport::Viewport(int width, int height) :
         throw std::runtime_error("glfw failed to init");
     }
 
-    AppWindow = glfwCreateWindow(width, height, "SketchiBoi", NULL, NULL);
+    AppWindow = glfwCreateWindow(width, height, "Obj Viewer", NULL, NULL);
     if (!AppWindow)
     {
         glfwTerminate();
@@ -57,6 +58,7 @@ Viewport::Viewport(int width, int height) :
     // Setting up saving default path
     //cwd = std::filesystem::current_path().parent_path() / "teapot-low.obj";
     std::filesystem::path cwdObj = std::filesystem::current_path().parent_path() / "teapot.obj";
+
     std::string cwdObjString = cwdObj.string();
     strcpy(mFilePathObj, cwdObjString.c_str());
     windowShouldClose = false;
@@ -66,6 +68,7 @@ Viewport::Viewport(int width, int height) :
     ImGui::SetCurrentContext(GuiContext);
 
     // I'm not really sure what ; (void)io does
+    // Apparently it's to make the compiler happy because io gets used
     io = &ImGui::GetIO(); (void)io;
     io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
@@ -85,7 +88,7 @@ Viewport::Viewport(int width, int height) :
     ImGui_ImplGlfw_InitForOpenGL(AppWindow, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-
+    
 }
 
 // Handle cleanup in the object destructor
@@ -141,8 +144,23 @@ CameraMessage Viewport::UpdateGui()
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
 
+    // From the ImGui demo
+    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+    int xPos, yPos;
+    glfwGetWindowPos(AppWindow, &xPos, &yPos);
+    ImVec2 base_pos(xPos, yPos);
+    int xSize, ySize;
+    glfwGetWindowSize(AppWindow, &xSize, &ySize);
+    ImVec2 base_size(xSize, ySize);
+
     ImGui::NewFrame();
     {
+        // Set up initial position
+        ImGui::SetNextWindowPos(ImVec2(base_pos.x + 1.01 * base_size.x,
+                                base_pos.y - base_size.y * 0.03),
+                                ImGuiCond_Once);
+        ImGui::SetNextWindowSize(ImVec2(base_size.x, base_size.y / 2 + base_size.y * 0.05), ImGuiCond_Once);
         ImGui::Begin("Test Controls");
 
         ImGui::SliderInt("Render Threads", &NumRenderThreads, 1, MaxThreads);
@@ -170,11 +188,10 @@ CameraMessage Viewport::UpdateGui()
             ActionReturned = CameraAction::DrawGradient;
         }
 
-        ImGui::InputText("##", mFilePathObj, IM_ARRAYSIZE(mFilePathObj));
+        ImGui::InputText("##asset folder", mFilePathObj, IM_ARRAYSIZE(mFilePathObj));
         ImGui::SameLine();
         if (ImGui::Button("Load Obj File"))
         {
-            // Do stuff
             ActionReturned = CameraAction::LoadObj;
             cameraMsg.mObjFilepath = std::string(mFilePathObj);
             std::cout << "File to load is: " << mFilePathObj << '\n';
@@ -208,7 +225,7 @@ CameraMessage Viewport::UpdateGui()
                 mStartTime = std::chrono::system_clock::now(); 
 
                 // degrees to radians the angle slider is in radians for reasons and I already did the conversion in the world transformation
-                yAngle += 5 * (3.141592653589793238463 / 180.0);
+                yAngle += 5 * (pi / 180.0);
                 ActionReturned = CameraAction::RotateWorld;
                 cameraMsg.mYAngle = yAngle;
                 mYAngle = yAngle;
@@ -233,6 +250,12 @@ CameraMessage Viewport::UpdateGui()
     }
 
     {
+        // Set up initial position
+        ImGui::SetNextWindowPos(ImVec2(base_pos.x + 1.01 * base_size.x,
+            base_pos.y + base_size.y / 2 + base_size.y * 0.2),
+            ImGuiCond_Once);
+        ImGui::SetNextWindowSize(ImVec2(base_size.x, base_size.y / 2), ImGuiCond_Once);
+
         ImGui::Begin("Object Controls");
 
         ImGui::SliderFloat("Illumination angle", &illuminationSlider, 0.0, 1.0, "%.1f");

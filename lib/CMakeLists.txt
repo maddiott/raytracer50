@@ -2,7 +2,9 @@ set(RAYTRACER_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 add_library(RAYTRACER STATIC)
 include_directories(${RAYTRACER_DIR}/../include)
 
-include_directories(${RAYTRACER_DIR}/../OutsideLibs/imgui
+include_directories(
+                    ${RAYTRACER_DIR}/../OutsideLibs/glfw-3.3.8/include
+                    ${RAYTRACER_DIR}/../OutsideLibs/imgui
                     ${RAYTRACER_DIR}/../OutsideLibs/stb_image_writer
                     )
 

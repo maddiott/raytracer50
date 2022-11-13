@@ -11,12 +11,12 @@ WorldObjectType WorldObject::GetShapeType()
 	return mShapeType;
 }
 
-void WorldObject::SetColor(color3 color)
+void WorldObject::SetColor(colorRgb color)
 {
 	mColor = color;
 }
 
-color3 WorldObject::GetColor()
+colorRgb WorldObject::GetColor()
 {
 	return mColor;
 }
