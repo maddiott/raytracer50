@@ -10,7 +10,8 @@ Repository for CS50 Final Project a simple Ray Tracer obj viewer written in C++2
   - Included under OutsideLibs
 
 # Assets
-Mesh of the Utah Teapot
+Mesh of a low resolution Utah Teapot
+Mesh of a cube
 
 # Program Features
 - Basic raytracer (naive intersection of polygons with Lambertian shading)
