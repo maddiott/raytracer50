@@ -6,5 +6,9 @@ enum class CameraAction
     DrawWorld = 1,
     DrawGradient = 2,
     SliderChanged = 3,
-    StopRender = 4
+    LoadObj = 4,
+    ClearCanavas = 5,
+    RotateWorld = 6,
+    ChangeRenderThreads = 7,
+    StopRender = 8
 };

@@ -11,12 +11,12 @@ WorldObjectType WorldObject::GetShapeType()
 	return mShapeType;
 }
 
-void WorldObject::SetColor(color3 color)
+void WorldObject::SetColor(colorRgb color)
 {
 	mColor = color;
 }
 
-color3 WorldObject::GetColor()
+colorRgb WorldObject::GetColor()
 {
 	return mColor;
 }
@@ -268,4 +268,3 @@ point3d WorldObject::PolygonIntersection(const point3d& rayOrigin, const point3d
 
     return closestNormal;// point3d(0, 0, 0);
 }
-

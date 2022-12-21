@@ -1,5 +1,7 @@
 #include "RaytracerApp.h"
 #include "Camera.h"
+#include "CameraMessage.h"
+
 #include "Viewport.h"
 #include <iostream>
 
@@ -12,10 +14,14 @@ RaytracerApp::RaytracerApp()
 
 int RaytracerApp::RunApp()
 {
-    Camera camera(GuiApp.GetHeight(), GuiApp.GetWidth(), GuiApp);
+    Camera camera(GuiApp.GetHeight(), GuiApp.GetWidth(), GuiApp, 1);
 
     CameraAction action = CameraAction::None;
     double illuminationPercentage = 1;
+
+    CameraMessage cameraMsg;
+
+    bool breakStuff = false;
 
     while (AppRunning)
     {
@@ -27,14 +33,19 @@ int RaytracerApp::RunApp()
         // Camera will include the world, but will also interact
 
         GuiApp.UpdateFrame();
-        GuiApp.UpdateGui();
-
-        illuminationPercentage = GuiApp.GetIlluminationPercentage();
-        camera.SetIlluminationPercentage(illuminationPercentage);
+        cameraMsg = GuiApp.UpdateGui();
 
         // Should add way to pass data between
         action = GuiApp.GetGuiAction();
-        camera.DoCameraAction(action);
+
+        if (action == CameraAction::StopRender)
+        {
+            camera.DoCameraAction(action, cameraMsg);
+        }
+        else
+        {
+            camera.DoCameraAction(action, cameraMsg);
+        }
 
         // Reset state, could probably set up a queue, but that's beyond the scope of this project
         action = CameraAction::None;
@@ -42,6 +53,12 @@ int RaytracerApp::RunApp()
         // Check if we should terminate the app
         AppRunning = !GuiApp.GetWindowShouldClose();
     }
+    std::cout << "Window should close\n";
+
+    // If we close the app from the OpenGl context, the program will hang
+    // To solve this we just tell the camera to stop rendering
+    action = CameraAction::StopRender;
+    camera.DoCameraAction(action, cameraMsg);
 
     return 0;
 }

@@ -1,5 +1,11 @@
+// This class defines the renderer
+// It is responsible for managing the state received from the gui logic
+// It handles creation of rendering threads, and their destruction
+// The world object is associated with the camera object
+// The camera creates the rays that interact with the scene
 #pragma once
 
+#include "RtMathHelp.h"
 #include "Viewport.h"
 #include "World.h"
 
@@ -14,7 +20,7 @@
 class Camera
 {
     public:
-        Camera(int height, int width, Viewport& canvas);
+        Camera(int height, int width, Viewport& canvas, int numThreads);
         ~Camera();
 
         void SetWidth(int width);
@@ -27,8 +33,11 @@ class Camera
         double GetIlluminationPercentage();
 
         void SetCanvas(Viewport& canvas);
+        void ClearCanvas(Viewport& canvas);
 
-        void DoCameraAction(CameraAction action);
+        void DoCameraAction(CameraAction action, CameraMessage cameraMsg);
+
+        void SetRenderThreads(int RenderThreads);
 
     private:
         int mHeight;
@@ -54,6 +63,7 @@ class Camera
 
         // Decided to try out atomics to help with detached thread synchronization
         std::atomic<int> mACounter;
+        std::atomic<int> mACleanCounter;
 
         // Adding some benchmarking using std chrono
         // Idea from https://gist.github.com/mcleary/b0bf4fa88830ff7c882d
@@ -62,7 +72,9 @@ class Camera
 
         bool isRunning;
         std::atomic<bool> isRendering;
+        std::atomic<bool> isClearing;
 
+        // Threads
         int mRenderThreads;
         std::vector<std::thread> mRenderThreadPool;
 
@@ -70,5 +82,8 @@ class Camera
         std::atomic<double> mIlluminationPercentageToRender;
 
         std::queue<double> mIlluminationQueue;
+
+        double mAngle;
+        CameraMessage mCameraState;
 };
 
