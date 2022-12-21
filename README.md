@@ -1,8 +1,9 @@
 # raytracer50
-Repository for CS50 Final Project a Ray Tracer
+Repository for CS50 Final Project a simple Ray Tracer obj viewer written in C++20
 
 # Dependencies
 GLFW (A cross platform OpenGl wrapper)
+- included in this repo under OutsideLibs
 Dear imGui (A cross platform imediate mode gui toolkit)
 - included in this repo under OutsideLibs
 Probably something like minibmp
@@ -10,14 +11,9 @@ Probably something like minibmp
 # Assets
 Mesh of the Utah Teapot
 
-# Goals for This Program
-- Create a basic raytracer (naive intersection of polynomials with Lambertian shading)
-- No textures because meh
-- Embed the thing in a gui
-- Support reading in arbitrary meshes
-- Render and show progress (speed is optional, so no BVHs) with button
-- Set resolution and samples per pixel (uniform sampling)
-- Save image as file that can be opened in windows photo viewer
-    probably a bmp since those are easy
-- Use CMake
-- Explore object oriented c++
+# Program Features
+- Basic raytracer (naive intersection of polygons with Lambertian shading)
+- The controls are embedded in a simple gui
+- Supports reading in a subset of .obj files
+- Save the rendered image as file that can be opened in windows photo viewer
+- Built using CMake and Visual Studio 2022
